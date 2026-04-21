@@ -1,7 +1,7 @@
 [gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://scripts/player.gd" id="1_31p03"]
-[ext_resource type="SpriteFrames" path="res://assets/sprites/water_idle/water_idle_frames.tres" id="2_8jvp8"]
+[ext_resource type="SpriteFrames" path="res://assets/sprites/water_player/water_player_frames.tres" id="2_8jvp8"]
 [ext_resource type="Texture2D" path="res://assets/sprites/water_states/water_calm.png" id="3_g4lyp"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_g53y1"]

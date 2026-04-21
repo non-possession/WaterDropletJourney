@@ -38,9 +38,13 @@ func _physics_process(delta: float) -> void:
 
 	var input_x := Input.get_axis("move_left", "move_right")
 	if absf(input_x) > 0.01:
+		if idle_sprite.animation != &"move":
+			idle_sprite.play("move")
 		velocity.x = move_toward(velocity.x, input_x * move_speed, accel * delta)
 		look_direction(signf(input_x))
 	else:
+		if idle_sprite.animation != &"idle":
+			idle_sprite.play("idle")
 		velocity.x = move_toward(velocity.x, 0.0, damping * delta)
 
 	if not is_on_floor():
@@ -55,6 +59,7 @@ func _physics_process(delta: float) -> void:
 
 func set_control_enabled(value: bool) -> void:
 	_control_enabled = value
+	idle_sprite.play("idle")
 	if value:
 		set_state_visual("tense")
 	else:
