@@ -255,21 +255,22 @@ limit_bottom = 1200
 position_smoothing_enabled = true
 position_smoothing_speed = 2.6
 
-[node name="CanvasLayer" type="CanvasLayer" parent="."]
+[node name="BackgroundCanvas" type="CanvasLayer" parent="."]
+layer = -10
 
-[node name="SkyBase" type="ColorRect" parent="CanvasLayer"]
+[node name="SkyBase" type="ColorRect" parent="BackgroundCanvas"]
 offset_right = 1280.0
 offset_bottom = 720.0
 mouse_filter = 2
 color = Color(0.105882, 0.168627, 0.286275, 1)
 
-[node name="FarMist" type="ColorRect" parent="CanvasLayer"]
+[node name="FarMist" type="ColorRect" parent="BackgroundCanvas"]
 offset_right = 1280.0
 offset_bottom = 420.0
 mouse_filter = 2
 color = Color(0.717647, 0.839216, 0.933333, 0.22)
 
-[node name="EastGlow" type="ColorRect" parent="CanvasLayer"]
+[node name="EastGlow" type="ColorRect" parent="BackgroundCanvas"]
 offset_left = 926.0
 offset_top = 28.0
 offset_right = 1280.0
@@ -277,7 +278,10 @@ offset_bottom = 338.0
 mouse_filter = 2
 color = Color(0.937255, 0.766863, 0.515294, 0.16)
 
-[node name="HUD" type="MarginContainer" parent="CanvasLayer"]
+[node name="HUDCanvas" type="CanvasLayer" parent="."]
+layer = 10
+
+[node name="HUD" type="MarginContainer" parent="HUDCanvas"]
 offset_right = 1280.0
 offset_bottom = 720.0
 theme_override_constants/margin_left = 40
@@ -285,30 +289,30 @@ theme_override_constants/margin_top = 30
 theme_override_constants/margin_right = 40
 theme_override_constants/margin_bottom = 30
 
-[node name="VBox" type="VBoxContainer" parent="CanvasLayer/HUD"]
+[node name="VBox" type="VBoxContainer" parent="HUDCanvas/HUD"]
 size_flags_horizontal = 3
 
-[node name="ProjectTitle" type="Label" parent="CanvasLayer/HUD/VBox"]
+[node name="ProjectTitle" type="Label" parent="HUDCanvas/HUD/VBox"]
 text = "WaterJourney / 第一章开场原型"
 
-[node name="ShotTitle" type="Label" parent="CanvasLayer/HUD/VBox"]
+[node name="ShotTitle" type="Label" parent="HUDCanvas/HUD/VBox"]
 unique_name_in_owner = true
 text = "镜头 1 / 高山与来风"
 
-[node name="ShotBody" type="Label" parent="CanvasLayer/HUD/VBox"]
+[node name="ShotBody" type="Label" parent="HUDCanvas/HUD/VBox"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(620, 0)
 text = "东边的大海送来水汽，越过长途，在高山之上化作雪、冰与流动之水。"
 autowrap_mode = 3
 
-[node name="Spacer" type="Control" parent="CanvasLayer/HUD/VBox"]
+[node name="Spacer" type="Control" parent="HUDCanvas/HUD/VBox"]
 custom_minimum_size = Vector2(0, 20)
 
-[node name="ObjectiveLabel" type="Label" parent="CanvasLayer/HUD/VBox"]
+[node name="ObjectiveLabel" type="Label" parent="HUDCanvas/HUD/VBox"]
 unique_name_in_owner = true
 text = "目标：向右沿着雪坡与冰面前进，开始离开。"
 
-[node name="ControlHint" type="Label" parent="CanvasLayer/HUD/VBox"]
+[node name="ControlHint" type="Label" parent="HUDCanvas/HUD/VBox"]
 unique_name_in_owner = true
 text = "操作：A / D 或方向键左右移动"
 
