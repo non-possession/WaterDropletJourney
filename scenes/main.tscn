@@ -1,0 +1,114 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/player.tscn" id="1_0d0sk"]
+[ext_resource type="Script" path="res://scripts/main.gd" id="2_gsv6g"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_ground"]
+size = Vector2(1200, 60)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_plat"]
+size = Vector2(260, 24)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_column"]
+size = Vector2(120, 160)
+
+[node name="Main" type="Node2D"]
+script = ExtResource("2_gsv6g")
+
+[node name="Player" parent="." instance=ExtResource("1_0d0sk")]
+position = Vector2(104, 398)
+
+[node name="World" type="Node2D" parent="."]
+
+[node name="Ground" type="StaticBody2D" parent="World"]
+position = Vector2(621, 650)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="World/Ground"]
+shape = SubResource("RectangleShape2D_ground")
+
+[node name="Polygon2D" type="Polygon2D" parent="World/Ground"]
+polygon = PackedVector2Array(-600, -30, 600, -30, 600, 30, -600, 30)
+color = Color(0.121569, 0.231373, 0.278431, 1)
+
+[node name="FrozenLedge" type="StaticBody2D" parent="World"]
+position = Vector2(390, 470)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="World/FrozenLedge"]
+shape = SubResource("RectangleShape2D_plat")
+
+[node name="Polygon2D" type="Polygon2D" parent="World/FrozenLedge"]
+polygon = PackedVector2Array(-130, -12, 130, -12, 130, 12, -130, 12)
+color = Color(0.690196, 0.878431, 0.956863, 0.85)
+
+[node name="LeafBridge" type="StaticBody2D" parent="World"]
+position = Vector2(770, 530)
+rotation = -0.0959931
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="World/LeafBridge"]
+shape = SubResource("RectangleShape2D_plat")
+
+[node name="Polygon2D" type="Polygon2D" parent="World/LeafBridge"]
+polygon = PackedVector2Array(-130, -12, 130, -12, 130, 12, -130, 12)
+color = Color(0.431373, 0.603922, 0.32549, 1)
+
+[node name="WarmColumn" type="StaticBody2D" parent="World"]
+position = Vector2(1040, 552)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="World/WarmColumn"]
+shape = SubResource("RectangleShape2D_column")
+
+[node name="Polygon2D" type="Polygon2D" parent="World/WarmColumn"]
+polygon = PackedVector2Array(-60, -80, 60, -80, 60, 80, -60, 80)
+color = Color(0.45098, 0.337255, 0.227451, 1)
+
+[node name="Camera2D" type="Camera2D" parent="."]
+position = Vector2(640, 360)
+current = true
+limit_left = 0
+limit_top = 0
+limit_right = 1280
+limit_bottom = 720
+position_smoothing_enabled = true
+position_smoothing_speed = 4.0
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="Background" type="ColorRect" parent="CanvasLayer"]
+offset_right = 1280.0
+offset_bottom = 720.0
+mouse_filter = 2
+color = Color(0.0627451, 0.113725, 0.172549, 1)
+
+[node name="TopGlow" type="ColorRect" parent="CanvasLayer"]
+offset_right = 1280.0
+offset_bottom = 320.0
+mouse_filter = 2
+color = Color(0.372549, 0.639216, 0.713726, 0.16)
+
+[node name="UI" type="MarginContainer" parent="CanvasLayer"]
+offset_right = 1280.0
+offset_bottom = 720.0
+theme_override_constants/margin_left = 36
+theme_override_constants/margin_top = 28
+theme_override_constants/margin_right = 36
+theme_override_constants/margin_bottom = 28
+
+[node name="VBox" type="VBoxContainer" parent="CanvasLayer/UI"]
+
+[node name="Title" type="Label" parent="CanvasLayer/UI/VBox"]
+text = "WaterJourney"
+
+[node name="Subtitle" type="Label" parent="CanvasLayer/UI/VBox"]
+text = "一滴水向海而行的诗性叙事原型"
+
+[node name="StateLabel" type="Label" parent="CanvasLayer/UI/VBox"]
+unique_name_in_owner = true
+text = "状态：液态"
+
+[node name="HintLabel" type="Label" parent="CanvasLayer/UI/VBox"]
+unique_name_in_owner = true
+text = "A/D 或 方向键移动，Space 跳跃，Tab 切换形态"
+
+[node name="VerseLabel" type="Label" parent="CanvasLayer/UI/VBox"]
+unique_name_in_owner = true
+text = "流动不是抵达，而是在关系中慢慢学会离开。"
