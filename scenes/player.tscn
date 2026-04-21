@@ -1,21 +1,33 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=5 format=3]
 
-[ext_resource type="Script" path="res://scripts/player.gd" id="1_a13ua"]
+[ext_resource type="Script" path="res://scripts/player.gd" id="1_31p03"]
+[ext_resource type="SpriteFrames" path="res://assets/sprites/water_idle/water_idle_frames.tres" id="2_8jvp8"]
+[ext_resource type="Texture2D" path="res://assets/sprites/water_states/water_calm.png" id="3_g4lyp"]
 
-[sub_resource type="CircleShape2D" id="CircleShape2D_31d8a"]
-radius = 14.0
+[sub_resource type="CircleShape2D" id="CircleShape2D_g53y1"]
+radius = 26.0
 
 [node name="Player" type="CharacterBody2D"]
-script = ExtResource("1_a13ua")
+script = ExtResource("1_31p03")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
-shape = SubResource("CircleShape2D_31d8a")
+position = Vector2(0, 8)
+shape = SubResource("CircleShape2D_g53y1")
 
-[node name="Body" type="Polygon2D" parent="."]
-polygon = PackedVector2Array(0, -24, 11, -8, 15, 10, 0, 18, -15, 10, -11, -8)
-color = Color(0.52549, 0.827451, 1, 0.95)
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+sprite_frames = ExtResource("2_8jvp8")
+animation = &"idle"
+frame_progress = 0.634052
+scale = Vector2(0.4, 0.4)
 
-[node name="Glow" type="PointLight2D" parent="."]
-texture_scale = 2.2
-color = Color(0.509804, 0.839216, 1, 0.35)
-energy = 0.6
+[node name="StateOverlay" type="Sprite2D" parent="."]
+texture = ExtResource("3_g4lyp")
+modulate = Color(1, 1, 1, 0.18)
+position = Vector2(0, -4)
+scale = Vector2(0.26, 0.26)
+
+[node name="InnerGlow" type="Sprite2D" parent="."]
+texture = ExtResource("3_g4lyp")
+modulate = Color(0.603922, 0.968627, 1, 0.72)
+position = Vector2(0, 8)
+scale = Vector2(0.11, 0.11)

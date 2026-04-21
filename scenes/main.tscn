@@ -1,114 +1,264 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=15 format=3]
 
-[ext_resource type="PackedScene" path="res://scenes/player.tscn" id="1_0d0sk"]
-[ext_resource type="Script" path="res://scripts/main.gd" id="2_gsv6g"]
+[ext_resource type="PackedScene" path="res://scenes/player.tscn" id="1_lit0s"]
+[ext_resource type="Script" path="res://scripts/main.gd" id="2_f6c8l"]
+[ext_resource type="Texture2D" path="res://assets/sprites/water_states/water_calm.png" id="3_2l4qj"]
+[ext_resource type="Texture2D" path="res://assets/sprites/water_states/water_cold.png" id="4_1knl5"]
+[ext_resource type="Texture2D" path="res://assets/sprites/water_states/water_tense.png" id="5_u0p2y"]
+[ext_resource type="Texture2D" path="res://assets/sprites/water_states/water_resting.png" id="6_5yq4g"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_ground"]
-size = Vector2(1200, 60)
+size = Vector2(1200, 90)
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_plat"]
-size = Vector2(260, 24)
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_slope"]
+size = Vector2(480, 64)
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_column"]
-size = Vector2(120, 160)
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_ice"]
+size = Vector2(520, 54)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_exit"]
+size = Vector2(220, 80)
 
 [node name="Main" type="Node2D"]
-script = ExtResource("2_gsv6g")
-
-[node name="Player" parent="." instance=ExtResource("1_0d0sk")]
-position = Vector2(104, 398)
+script = ExtResource("2_f6c8l")
 
 [node name="World" type="Node2D" parent="."]
 
-[node name="Ground" type="StaticBody2D" parent="World"]
-position = Vector2(621, 650)
+[node name="FarMountainA" type="Polygon2D" parent="World"]
+position = Vector2(-72, 322)
+color = Color(0.32549, 0.462745, 0.615686, 0.55)
+polygon = PackedVector2Array(0, 260, 180, 60, 320, 200, 500, 0, 760, 180, 1020, 30, 1240, 220, 1460, 100, 1460, 520, 0, 520)
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="World/Ground"]
+[node name="FarMountainB" type="Polygon2D" parent="World"]
+position = Vector2(-120, 378)
+color = Color(0.207843, 0.333333, 0.478431, 0.72)
+polygon = PackedVector2Array(0, 280, 150, 120, 250, 170, 430, 40, 650, 220, 820, 90, 1040, 200, 1180, 130, 1480, 250, 1480, 560, 0, 560)
+
+[node name="SnowPlateau" type="Polygon2D" parent="World"]
+position = Vector2(-84, 514)
+color = Color(0.815686, 0.909804, 0.980392, 0.92)
+polygon = PackedVector2Array(0, 130, 220, 72, 420, 108, 650, 42, 860, 84, 1130, 18, 1420, 90, 1420, 380, 0, 380)
+
+[node name="IceFlow" type="Polygon2D" parent="World"]
+position = Vector2(110, 608)
+color = Color(0.541176, 0.811765, 0.960784, 0.78)
+polygon = PackedVector2Array(0, 104, 230, 52, 470, 86, 760, 40, 970, 70, 970, 214, 0, 214)
+
+[node name="PlayableGround" type="StaticBody2D" parent="World"]
+position = Vector2(970, 774)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="World/PlayableGround"]
 shape = SubResource("RectangleShape2D_ground")
 
-[node name="Polygon2D" type="Polygon2D" parent="World/Ground"]
-polygon = PackedVector2Array(-600, -30, 600, -30, 600, 30, -600, 30)
-color = Color(0.121569, 0.231373, 0.278431, 1)
+[node name="GroundVisual" type="Polygon2D" parent="World/PlayableGround"]
+polygon = PackedVector2Array(-600, -45, 600, -45, 600, 45, -600, 45)
+color = Color(0.721569, 0.858824, 0.956863, 0.95)
 
-[node name="FrozenLedge" type="StaticBody2D" parent="World"]
-position = Vector2(390, 470)
+[node name="Slope" type="StaticBody2D" parent="World"]
+position = Vector2(702, 694)
+rotation = -0.174533
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="World/FrozenLedge"]
-shape = SubResource("RectangleShape2D_plat")
+[node name="CollisionShape2D" type="CollisionShape2D" parent="World/Slope"]
+shape = SubResource("RectangleShape2D_slope")
 
-[node name="Polygon2D" type="Polygon2D" parent="World/FrozenLedge"]
-polygon = PackedVector2Array(-130, -12, 130, -12, 130, 12, -130, 12)
-color = Color(0.690196, 0.878431, 0.956863, 0.85)
+[node name="SlopeVisual" type="Polygon2D" parent="World/Slope"]
+polygon = PackedVector2Array(-240, -32, 240, -32, 240, 32, -240, 32)
+color = Color(0.840404, 0.936823, 1, 0.94)
 
-[node name="LeafBridge" type="StaticBody2D" parent="World"]
-position = Vector2(770, 530)
-rotation = -0.0959931
+[node name="IceShelf" type="StaticBody2D" parent="World"]
+position = Vector2(1248, 696)
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="World/LeafBridge"]
-shape = SubResource("RectangleShape2D_plat")
+[node name="CollisionShape2D" type="CollisionShape2D" parent="World/IceShelf"]
+shape = SubResource("RectangleShape2D_ice")
 
-[node name="Polygon2D" type="Polygon2D" parent="World/LeafBridge"]
-polygon = PackedVector2Array(-130, -12, 130, -12, 130, 12, -130, 12)
-color = Color(0.431373, 0.603922, 0.32549, 1)
+[node name="IceShelfVisual" type="Polygon2D" parent="World/IceShelf"]
+polygon = PackedVector2Array(-260, -27, 260, -27, 260, 27, -260, 27)
+color = Color(0.573309, 0.844469, 1, 0.86)
 
-[node name="WarmColumn" type="StaticBody2D" parent="World"]
-position = Vector2(1040, 552)
+[node name="ExitRise" type="StaticBody2D" parent="World"]
+position = Vector2(1658, 648)
+rotation = -0.0872665
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="World/WarmColumn"]
-shape = SubResource("RectangleShape2D_column")
+[node name="CollisionShape2D" type="CollisionShape2D" parent="World/ExitRise"]
+shape = SubResource("RectangleShape2D_exit")
 
-[node name="Polygon2D" type="Polygon2D" parent="World/WarmColumn"]
-polygon = PackedVector2Array(-60, -80, 60, -80, 60, 80, -60, 80)
-color = Color(0.45098, 0.337255, 0.227451, 1)
+[node name="ExitVisual" type="Polygon2D" parent="World/ExitRise"]
+polygon = PackedVector2Array(-110, -40, 110, -40, 110, 40, -110, 40)
+color = Color(0.791276, 0.909617, 1, 0.92)
+
+[node name="WaterSiblings" type="Node2D" parent="."]
+
+[node name="IceSibling" type="Sprite2D" parent="WaterSiblings"]
+texture = ExtResource("4_1knl5")
+modulate = Color(0.95, 0.98, 1, 0.55)
+position = Vector2(534, 532)
+scale = Vector2(0.22, 0.22)
+metadata/_custom_type_script = ""
+metadata/role = "still"
+
+[node name="RestingSibling" type="Sprite2D" parent="WaterSiblings"]
+texture = ExtResource("6_5yq4g")
+modulate = Color(0.92, 0.95, 1, 0.42)
+position = Vector2(626, 504)
+scale = Vector2(0.17, 0.17)
+metadata/role = "still"
+
+[node name="IntentSiblingA" type="Sprite2D" parent="WaterSiblings"]
+texture = ExtResource("3_2l4qj")
+modulate = Color(1, 1, 1, 0.74)
+position = Vector2(760, 474)
+scale = Vector2(0.16, 0.16)
+metadata/role = "intent"
+
+[node name="IntentSiblingB" type="Sprite2D" parent="WaterSiblings"]
+texture = ExtResource("5_u0p2y")
+modulate = Color(1, 1, 1, 0.62)
+position = Vector2(868, 448)
+scale = Vector2(0.14, 0.14)
+metadata/role = "intent"
+
+[node name="SnowSibling" type="Sprite2D" parent="WaterSiblings"]
+texture = ExtResource("3_2l4qj")
+modulate = Color(0.96, 0.98, 1, 0.28)
+position = Vector2(448, 446)
+scale = Vector2(0.1, 0.1)
+metadata/role = "snow"
+
+[node name="Player" parent="." instance=ExtResource("1_lit0s")]
+position = Vector2(814, 596)
+
+[node name="SnowAndMist" type="Node2D" parent="."]
+
+[node name="MistStrandA" type="Node2D" parent="SnowAndMist"]
+position = Vector2(290, 284)
+metadata/base_y = 284
+
+[node name="Polygon2D" type="Polygon2D" parent="SnowAndMist/MistStrandA"]
+polygon = PackedVector2Array(-120, -12, 120, -18, 142, 10, -110, 18)
+color = Color(0.870588, 0.94902, 1, 0.11)
+
+[node name="MistStrandB" type="Node2D" parent="SnowAndMist"]
+position = Vector2(964, 228)
+metadata/base_y = 228
+
+[node name="Polygon2D" type="Polygon2D" parent="SnowAndMist/MistStrandB"]
+polygon = PackedVector2Array(-140, -16, 120, -20, 160, 10, -130, 24)
+color = Color(0.917647, 0.968627, 1, 0.1)
+
+[node name="SnowShardA" type="Node2D" parent="SnowAndMist"]
+position = Vector2(1174, 362)
+metadata/base_y = 362
+
+[node name="Polygon2D" type="Polygon2D" parent="SnowAndMist/SnowShardA"]
+polygon = PackedVector2Array(0, -18, 12, 0, 0, 18, -12, 0)
+color = Color(0.95, 0.98, 1, 0.35)
+
+[node name="SnowShardB" type="Node2D" parent="SnowAndMist"]
+position = Vector2(996, 316)
+metadata/base_y = 316
+
+[node name="Polygon2D" type="Polygon2D" parent="SnowAndMist/SnowShardB"]
+polygon = PackedVector2Array(0, -12, 8, 0, 0, 12, -8, 0)
+color = Color(0.95, 0.98, 1, 0.28)
+
+[node name="SnowShardC" type="Node2D" parent="SnowAndMist"]
+position = Vector2(706, 258)
+metadata/base_y = 258
+
+[node name="Polygon2D" type="Polygon2D" parent="SnowAndMist/SnowShardC"]
+polygon = PackedVector2Array(0, -14, 10, 0, 0, 14, -10, 0)
+color = Color(0.95, 0.98, 1, 0.22)
+
+[node name="ShotMarkers" type="Node2D" parent="."]
+
+[node name="Shot1" type="Camera2D" parent="ShotMarkers"]
+position = Vector2(860, 292)
+zoom = Vector2(0.48, 0.48)
+
+[node name="Shot2" type="Camera2D" parent="ShotMarkers"]
+position = Vector2(776, 412)
+zoom = Vector2(0.62, 0.62)
+
+[node name="Shot3" type="Camera2D" parent="ShotMarkers"]
+position = Vector2(820, 540)
+zoom = Vector2(1.18, 1.18)
+
+[node name="Shot4" type="Camera2D" parent="ShotMarkers"]
+position = Vector2(858, 516)
+zoom = Vector2(1.08, 1.08)
+
+[node name="Shot5" type="Camera2D" parent="ShotMarkers"]
+position = Vector2(904, 560)
+zoom = Vector2(0.9, 0.9)
+
+[node name="Shot6" type="Camera2D" parent="ShotMarkers"]
+position = Vector2(996, 622)
+zoom = Vector2(0.86, 0.86)
 
 [node name="Camera2D" type="Camera2D" parent="."]
-position = Vector2(640, 360)
+position = Vector2(860, 292)
+zoom = Vector2(0.48, 0.48)
 current = true
 limit_left = 0
 limit_top = 0
-limit_right = 1280
-limit_bottom = 720
+limit_right = 2200
+limit_bottom = 1200
 position_smoothing_enabled = true
-position_smoothing_speed = 4.0
+position_smoothing_speed = 2.6
 
 [node name="CanvasLayer" type="CanvasLayer" parent="."]
 
-[node name="Background" type="ColorRect" parent="CanvasLayer"]
+[node name="SkyBase" type="ColorRect" parent="CanvasLayer"]
 offset_right = 1280.0
 offset_bottom = 720.0
 mouse_filter = 2
-color = Color(0.0627451, 0.113725, 0.172549, 1)
+color = Color(0.105882, 0.168627, 0.286275, 1)
 
-[node name="TopGlow" type="ColorRect" parent="CanvasLayer"]
+[node name="FarMist" type="ColorRect" parent="CanvasLayer"]
 offset_right = 1280.0
-offset_bottom = 320.0
+offset_bottom = 420.0
 mouse_filter = 2
-color = Color(0.372549, 0.639216, 0.713726, 0.16)
+color = Color(0.717647, 0.839216, 0.933333, 0.22)
 
-[node name="UI" type="MarginContainer" parent="CanvasLayer"]
+[node name="EastGlow" type="ColorRect" parent="CanvasLayer"]
+offset_left = 926.0
+offset_top = 28.0
+offset_right = 1280.0
+offset_bottom = 338.0
+mouse_filter = 2
+color = Color(0.937255, 0.766863, 0.515294, 0.16)
+
+[node name="HUD" type="MarginContainer" parent="CanvasLayer"]
 offset_right = 1280.0
 offset_bottom = 720.0
-theme_override_constants/margin_left = 36
-theme_override_constants/margin_top = 28
-theme_override_constants/margin_right = 36
-theme_override_constants/margin_bottom = 28
+theme_override_constants/margin_left = 40
+theme_override_constants/margin_top = 30
+theme_override_constants/margin_right = 40
+theme_override_constants/margin_bottom = 30
 
-[node name="VBox" type="VBoxContainer" parent="CanvasLayer/UI"]
+[node name="VBox" type="VBoxContainer" parent="CanvasLayer/HUD"]
+size_flags_horizontal = 3
 
-[node name="Title" type="Label" parent="CanvasLayer/UI/VBox"]
-text = "WaterJourney"
+[node name="ProjectTitle" type="Label" parent="CanvasLayer/HUD/VBox"]
+text = "WaterJourney / 第一章开场原型"
 
-[node name="Subtitle" type="Label" parent="CanvasLayer/UI/VBox"]
-text = "一滴水向海而行的诗性叙事原型"
-
-[node name="StateLabel" type="Label" parent="CanvasLayer/UI/VBox"]
+[node name="ShotTitle" type="Label" parent="CanvasLayer/HUD/VBox"]
 unique_name_in_owner = true
-text = "状态：液态"
+text = "镜头 1 / 高山与来风"
 
-[node name="HintLabel" type="Label" parent="CanvasLayer/UI/VBox"]
+[node name="ShotBody" type="Label" parent="CanvasLayer/HUD/VBox"]
 unique_name_in_owner = true
-text = "A/D 或 方向键移动，Space 跳跃，Tab 切换形态"
+custom_minimum_size = Vector2(620, 0)
+text = "东边的大海送来水汽，越过长途，在高山之上化作雪、冰与流动之水。"
+autowrap_mode = 3
 
-[node name="VerseLabel" type="Label" parent="CanvasLayer/UI/VBox"]
+[node name="Spacer" type="Control" parent="CanvasLayer/HUD/VBox"]
+custom_minimum_size = Vector2(0, 20)
+
+[node name="ObjectiveLabel" type="Label" parent="CanvasLayer/HUD/VBox"]
 unique_name_in_owner = true
-text = "流动不是抵达，而是在关系中慢慢学会离开。"
+text = "目标：向右沿着雪坡与冰面前进，开始离开。"
+
+[node name="ControlHint" type="Label" parent="CanvasLayer/HUD/VBox"]
+unique_name_in_owner = true
+text = "操作：A / D 或方向键左右移动"

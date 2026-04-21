@@ -2,95 +2,98 @@ extends CharacterBody2D
 
 class_name WaterPlayer
 
-enum Form {
-	LIQUID,
-	ICE,
-	MIST,
+const STATE_TEXTURES := {
+	"calm": preload("res://assets/sprites/water_states/water_calm.png"),
+	"cold": preload("res://assets/sprites/water_states/water_cold.png"),
+	"tense": preload("res://assets/sprites/water_states/water_tense.png"),
 }
 
-const FORM_NAMES := {
-	Form.LIQUID: "液态",
-	Form.ICE: "冰态",
-	Form.MIST: "雾态",
-}
+@export var move_speed := 125.0
+@export var accel := 420.0
+@export var damping := 520.0
+@export var drift_gravity := 380.0
+@export var gentle_lift := -45.0
 
-const FORM_COLORS := {
-	Form.LIQUID: Color(0.53, 0.83, 1.0, 0.95),
-	Form.ICE: Color(0.84, 0.95, 1.0, 1.0),
-	Form.MIST: Color(0.92, 0.97, 1.0, 0.72),
-}
+@onready var idle_sprite: AnimatedSprite2D = $AnimatedSprite2D
+@onready var state_overlay: Sprite2D = $StateOverlay
+@onready var inner_glow: Sprite2D = $InnerGlow
 
-@export var current_form: Form = Form.LIQUID
-
-@onready var body: Polygon2D = $Body
-
-var _gravity := ProjectSettings.get_setting("physics/2d/default_gravity") as float
+var _control_enabled := false
+var _base_scale := Vector2.ONE
 
 
 func _ready() -> void:
-	_apply_form_visuals()
+	idle_sprite.play("idle")
+	_base_scale = idle_sprite.scale
+	set_state_visual("calm")
 
 
 func _physics_process(delta: float) -> void:
-	if Input.is_action_just_pressed("switch_state"):
-		_cycle_form()
+	if not _control_enabled:
+		velocity.x = move_toward(velocity.x, 0.0, damping * delta)
+		velocity.y = move_toward(velocity.y, gentle_lift, 260.0 * delta)
+		move_and_slide()
+		_apply_breathing()
+		return
 
 	var input_x := Input.get_axis("move_left", "move_right")
-	var input_y := Input.get_axis("move_up", "move_down")
+	if absf(input_x) > 0.01:
+		velocity.x = move_toward(velocity.x, input_x * move_speed, accel * delta)
+		look_direction(signf(input_x))
+	else:
+		velocity.x = move_toward(velocity.x, 0.0, damping * delta)
 
-	match current_form:
-		Form.LIQUID:
-			_update_liquid(input_x, delta)
-		Form.ICE:
-			_update_ice(input_x, delta)
-		Form.MIST:
-			_update_mist(input_x, input_y, delta)
+	if not is_on_floor():
+		velocity.y += drift_gravity * delta
+	else:
+		velocity.y = move_toward(velocity.y, gentle_lift, 180.0 * delta)
 
 	move_and_slide()
+	_apply_breathing()
+	_apply_motion_feel(input_x)
 
 
-func _update_liquid(input_x: float, delta: float) -> void:
-	if not is_on_floor():
-		velocity.y += _gravity * delta
-	elif Input.is_action_just_pressed("jump"):
-		velocity.y = -310.0
-
-	velocity.x = move_toward(velocity.x, input_x * 210.0, 880.0 * delta)
-
-
-func _update_ice(input_x: float, delta: float) -> void:
-	if not is_on_floor():
-		velocity.y += _gravity * 1.1 * delta
-	elif Input.is_action_just_pressed("jump"):
-		velocity.y = -250.0
-
-	var target := input_x * 285.0
-	var accel := 420.0 if absf(target) > 0.01 else 120.0
-	velocity.x = move_toward(velocity.x, target, accel * delta)
+func set_control_enabled(value: bool) -> void:
+	_control_enabled = value
+	if value:
+		set_state_visual("tense")
+	else:
+		set_state_visual("calm")
 
 
-func _update_mist(input_x: float, input_y: float, delta: float) -> void:
-	var target_x := input_x * 170.0
-	var target_y := input_y * 150.0 - 60.0
-	velocity.x = move_toward(velocity.x, target_x, 540.0 * delta)
-	velocity.y = move_toward(velocity.y, target_y, 360.0 * delta)
+func look_east() -> void:
+	look_direction(1.0)
 
 
-func _cycle_form() -> void:
-	current_form = (current_form + 1) % Form.size()
-	_apply_form_visuals()
+func look_direction(direction: float) -> void:
+	if direction == 0.0:
+		return
+	idle_sprite.flip_h = direction < 0.0
+	state_overlay.flip_h = direction < 0.0
+	inner_glow.flip_h = direction < 0.0
 
 
-func _apply_form_visuals() -> void:
-	body.color = FORM_COLORS[current_form]
-	match current_form:
-		Form.LIQUID:
-			body.scale = Vector2(1.0, 1.0)
-		Form.ICE:
-			body.scale = Vector2(0.95, 1.18)
-		Form.MIST:
-			body.scale = Vector2(1.18, 0.8)
+func set_state_visual(state_name: String) -> void:
+	match state_name:
+		"cold":
+			state_overlay.texture = STATE_TEXTURES["cold"]
+			state_overlay.modulate = Color(1, 1, 1, 0.34)
+		"tense":
+			state_overlay.texture = STATE_TEXTURES["tense"]
+			state_overlay.modulate = Color(1, 1, 1, 0.22)
+		_:
+			state_overlay.texture = STATE_TEXTURES["calm"]
+			state_overlay.modulate = Color(1, 1, 1, 0.18)
 
 
-func get_form_name() -> String:
-	return FORM_NAMES[current_form]
+func _apply_breathing() -> void:
+	var time := Time.get_ticks_msec() / 1000.0
+	var breathe := 1.0 + sin(time * 2.1) * 0.02
+	idle_sprite.scale = _base_scale * Vector2(1.0 - (breathe - 1.0) * 0.35, breathe)
+	inner_glow.modulate.a = 0.72 + sin(time * 1.8) * 0.06
+
+
+func _apply_motion_feel(input_x: float) -> void:
+	var stretch: float = clamp(absf(velocity.x) / move_speed, 0.0, 1.0)
+	idle_sprite.scale = idle_sprite.scale.lerp(_base_scale * Vector2(1.0 + stretch * 0.08, 1.0 - stretch * 0.05), 0.16)
+	inner_glow.position.x = move_toward(inner_glow.position.x, input_x * 4.0, 0.6)
