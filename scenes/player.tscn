@@ -28,3 +28,9 @@ texture = ExtResource("3_g4lyp")
 modulate = Color(0.603922, 0.968627, 1, 0.72)
 position = Vector2(0, 8)
 scale = Vector2(0.11, 0.11)
+
+[node name="IdleWaterAudio" type="AudioStreamPlayer" parent="."]
+bus = &"Master"
+
+[node name="MoveWaterAudio" type="AudioStreamPlayer" parent="."]
+bus = &"Master"

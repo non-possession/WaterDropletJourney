@@ -25,6 +25,8 @@ const MOVE_FRAMES: Array[Texture2D] = [
 	preload("res://assets/sprites/water_player_sheet/move_sheet_06.png"),
 	preload("res://assets/sprites/water_player_sheet/move_sheet_07.png"),
 ]
+const IDLE_WATER_SOUND := preload("res://assets/audio/ch1/protagonist_idle_subtle_water.wav")
+const MOVE_WATER_SOUND := preload("res://assets/audio/ch1/protagonist_light_movement_water.wav")
 
 @export var move_speed := 125.0
 @export var accel := 420.0
@@ -35,6 +37,8 @@ const MOVE_FRAMES: Array[Texture2D] = [
 @onready var idle_sprite: AnimatedSprite2D = $AnimatedSprite2D
 @onready var state_overlay: Sprite2D = $StateOverlay
 @onready var inner_glow: Sprite2D = $InnerGlow
+@onready var idle_audio: AudioStreamPlayer = $IdleWaterAudio
+@onready var move_audio: AudioStreamPlayer = $MoveWaterAudio
 
 var _control_enabled := false
 var _base_scale := Vector2.ONE
@@ -42,6 +46,7 @@ var _base_scale := Vector2.ONE
 
 func _ready() -> void:
 	_assign_runtime_frames()
+	_setup_audio()
 	idle_sprite.play("idle")
 	_base_scale = idle_sprite.scale
 	set_state_visual("calm")
@@ -53,6 +58,7 @@ func _physics_process(delta: float) -> void:
 		velocity.y = move_toward(velocity.y, gentle_lift, 260.0 * delta)
 		move_and_slide()
 		_apply_breathing()
+		_update_audio(0.0)
 		return
 
 	var input_x := Input.get_axis("move_left", "move_right")
@@ -74,6 +80,7 @@ func _physics_process(delta: float) -> void:
 	move_and_slide()
 	_apply_breathing()
 	_apply_motion_feel(input_x)
+	_update_audio(input_x)
 
 
 func set_control_enabled(value: bool) -> void:
@@ -138,3 +145,37 @@ func _assign_runtime_frames() -> void:
 		sprite_frames.add_frame("move", frame)
 
 	idle_sprite.sprite_frames = sprite_frames
+
+
+func _setup_audio() -> void:
+	idle_audio.stream = _prepare_looping_stream(IDLE_WATER_SOUND)
+	move_audio.stream = _prepare_looping_stream(MOVE_WATER_SOUND)
+	idle_audio.volume_db = -20.0
+	move_audio.volume_db = -18.5
+	idle_audio.play()
+
+
+func _update_audio(input_x: float) -> void:
+	var is_moving := _control_enabled and absf(input_x) > 0.01
+	if is_moving:
+		if idle_audio.playing:
+			idle_audio.stop()
+		if not move_audio.playing:
+			move_audio.play()
+	else:
+		if move_audio.playing:
+			move_audio.stop()
+		if not idle_audio.playing:
+			idle_audio.play()
+
+	var speed_mix: float = clamp(absf(velocity.x) / move_speed, 0.0, 1.0)
+	idle_audio.volume_db = -22.0 + (1.0 - speed_mix) * 2.0
+	move_audio.volume_db = -21.0 + speed_mix * 4.0
+
+
+func _prepare_looping_stream(stream: AudioStream) -> AudioStream:
+	if stream is AudioStreamWAV:
+		var looped_stream := stream.duplicate() as AudioStreamWAV
+		looped_stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
+		return looped_stream
+	return stream

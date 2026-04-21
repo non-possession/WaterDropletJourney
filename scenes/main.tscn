@@ -311,3 +311,14 @@ text = "目标：向右沿着雪坡与冰面前进，开始离开。"
 [node name="ControlHint" type="Label" parent="CanvasLayer/HUD/VBox"]
 unique_name_in_owner = true
 text = "操作：A / D 或方向键左右移动"
+
+[node name="Audio" type="Node" parent="."]
+
+[node name="WindAmbience" type="AudioStreamPlayer" parent="Audio"]
+bus = &"Master"
+
+[node name="WindDetail" type="AudioStreamPlayer" parent="Audio"]
+bus = &"Master"
+
+[node name="ControlCue" type="AudioStreamPlayer" parent="Audio"]
+bus = &"Master"
