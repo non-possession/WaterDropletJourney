@@ -1,4 +1,5 @@
 from pathlib import Path
+from collections import deque
 from PIL import Image, ImageFilter, ImageEnhance
 
 
@@ -9,7 +10,84 @@ PLAYER_DIR = ROOT / "assets/sprites/water_player"
 SIBLING_DIR = ROOT / "assets/sprites/water_siblings"
 
 
+def checker_bg(pixel) -> bool:
+    r, g, b, a = pixel
+    return a > 0 and r > 232 and g > 232 and b > 232 and max(r, g, b) - min(r, g, b) < 20
+
+
+def edge_key_transparent(image: Image.Image, bg_predicate) -> Image.Image:
+    image = image.convert("RGBA")
+    px = image.load()
+    width, height = image.size
+    visited = [[False] * height for _ in range(width)]
+    queue: deque[tuple[int, int]] = deque()
+
+    def try_add(x: int, y: int) -> None:
+        if visited[x][y]:
+            return
+        visited[x][y] = True
+        if bg_predicate(px[x, y]):
+            queue.append((x, y))
+
+    for x in range(width):
+        try_add(x, 0)
+        try_add(x, height - 1)
+    for y in range(height):
+        try_add(0, y)
+        try_add(width - 1, y)
+
+    while queue:
+        x, y = queue.popleft()
+        r, g, b, _a = px[x, y]
+        px[x, y] = (r, g, b, 0)
+        for nx, ny in ((x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)):
+            if 0 <= nx < width and 0 <= ny < height and not visited[nx][ny]:
+                visited[nx][ny] = True
+                if bg_predicate(px[nx, ny]):
+                    queue.append((nx, ny))
+
+    return image
+
+
+def trim_to_alpha(image: Image.Image, pad: int) -> Image.Image:
+    bbox = image.getchannel("A").getbbox()
+    if not bbox:
+        return image
+    left = max(0, bbox[0] - pad)
+    top = max(0, bbox[1] - pad)
+    right = min(image.width, bbox[2] + pad)
+    bottom = min(image.height, bbox[3] + pad)
+    return image.crop((left, top, right, bottom))
+
+
+def center_on_canvas(image: Image.Image, canvas_size: tuple[int, int]) -> Image.Image:
+    canvas = Image.new("RGBA", canvas_size, (0, 0, 0, 0))
+    x = (canvas_size[0] - image.width) // 2
+    y = (canvas_size[1] - image.height) // 2
+    canvas.alpha_composite(image, (x, y))
+    return canvas
+
+
+def sanitize_idle_sources() -> None:
+    idle_paths = [IDLE_SRC_DIR / f"idle_{i:02d}.png" for i in range(6)]
+    cleaned_frames = [trim_to_alpha(edge_key_transparent(Image.open(p).convert("RGBA"), checker_bg), 12) for p in idle_paths]
+    canvas_w = max(img.width for img in cleaned_frames) + 24
+    canvas_h = max(img.height for img in cleaned_frames) + 24
+    for path, img in zip(idle_paths, cleaned_frames):
+        center_on_canvas(img, (canvas_w, canvas_h)).save(path)
+
+
+def sanitize_state_sources() -> None:
+    state_paths = sorted(STATE_DIR.glob("*.png"))
+    cleaned_states = [trim_to_alpha(edge_key_transparent(Image.open(p).convert("RGBA"), checker_bg), 12) for p in state_paths]
+    canvas_w = max(img.width for img in cleaned_states) + 20
+    canvas_h = max(img.height for img in cleaned_states) + 20
+    for path, img in zip(state_paths, cleaned_states):
+        center_on_canvas(img, (canvas_w, canvas_h)).save(path)
+
+
 def build_player_frames() -> None:
+    sanitize_idle_sources()
     idle_paths = [IDLE_SRC_DIR / f"idle_{i:02d}.png" for i in range(6)]
     frames = [Image.open(p).convert("RGBA") for p in idle_paths]
     bboxes = [img.getchannel("A").getbbox() for img in frames]
@@ -104,6 +182,7 @@ def make_variant(
 
 
 def build_sibling_variants() -> None:
+    sanitize_state_sources()
     make_variant("water_cold.png", "sibling_still_ice_01.png", alpha_mul=0.62, tint=(235, 245, 255), bright=0.95, contrast=1.08)
     make_variant("water_resting.png", "sibling_still_rest_01.png", alpha_mul=0.5, tint=(230, 240, 255), bright=0.92)
     make_variant("water_calm.png", "sibling_intent_01.png", alpha_mul=0.72, tint=(255, 255, 255), bright=1.04, contrast=1.06)

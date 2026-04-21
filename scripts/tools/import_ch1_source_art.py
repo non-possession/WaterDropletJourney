@@ -49,22 +49,37 @@ def build_player_sheet_frames() -> None:
 
     def motion_bg(pixel) -> bool:
         r, g, b, a = pixel
-        return a > 0 and r > 244 and g > 244 and b > 244 and max(r, g, b) - min(r, g, b) < 6
+        return a > 0 and r > 238 and g > 238 and b > 238 and max(r, g, b) - min(r, g, b) < 14
 
     motion = edge_key_transparent(motion, motion_bg)
     frame_width = 181
     frame_count = 8
+    compact_frames = []
+    max_width = 0
+    max_height = 0
+
     for index in range(frame_count):
         cell = motion.crop((index * frame_width, 0, (index + 1) * frame_width, motion.height))
-        bbox = cell.getbbox()
+        bbox = cell.getchannel("A").getbbox()
         if bbox:
-            pad = 8
+            pad = 12
             left = max(0, bbox[0] - pad)
             top = max(0, bbox[1] - pad)
             right = min(cell.width, bbox[2] + pad)
             bottom = min(cell.height, bbox[3] + pad)
             cell = cell.crop((left, top, right, bottom))
-        cell.save(PLAYER_OUT / f"move_sheet_{index:02d}.png")
+        compact_frames.append(cell)
+        max_width = max(max_width, cell.width)
+        max_height = max(max_height, cell.height)
+
+    canvas_width = max_width + 16
+    canvas_height = max_height + 16
+    for index, cell in enumerate(compact_frames):
+        canvas = Image.new("RGBA", (canvas_width, canvas_height), (0, 0, 0, 0))
+        x = (canvas_width - cell.width) // 2
+        y = (canvas_height - cell.height) // 2
+        canvas.alpha_composite(cell, (x, y))
+        canvas.save(PLAYER_OUT / f"move_sheet_{index:02d}.png")
 
     lines = ['[gd_resource type="SpriteFrames" load_steps=15 format=3]', ""]
     ext_id = 1
@@ -131,7 +146,7 @@ def build_midground_tiles() -> None:
     }
     for name, box in crops.items():
         tile = snow.crop(box)
-        bbox = tile.getbbox()
+        bbox = tile.getchannel("A").getbbox()
         if bbox:
             pad = 4
             left = max(0, bbox[0] - pad)
