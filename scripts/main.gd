@@ -41,6 +41,12 @@ const SHOT_PATHS := [
 	NodePath("ShotMarkers/Shot5"),
 	NodePath("ShotMarkers/Shot6"),
 ]
+const MOUNTAIN_BACKDROP := preload("res://assets/originals/雪山远景背景.png")
+const SNOW_PLATFORM := preload("res://assets/tiles/ch1_snow_mid/snow_platform_long_01.png")
+const ICE_PLATFORM := preload("res://assets/tiles/ch1_snow_mid/ice_platform_long_01.png")
+const SNOW_SLOPE := preload("res://assets/tiles/ch1_snow_mid/snow_platform_slope_01.png")
+const EXIT_CLIFF := preload("res://assets/tiles/ch1_snow_mid/cliff_block_02.png")
+const MIST_PATCH := preload("res://assets/tiles/ch1_snow_mid/mist_patch_02.png")
 
 @onready var player: WaterPlayer = $Player
 @onready var camera: Camera2D = $Camera2D
@@ -52,11 +58,20 @@ const SHOT_PATHS := [
 @onready var far_mist: ColorRect = $CanvasLayer/FarMist
 @onready var sibling_group: Node2D = $WaterSiblings
 @onready var drift_group: Node2D = $SnowAndMist
+@onready var mountain_backdrop: Sprite2D = $World/MountainBackdrop
+@onready var ground_snow_a: Sprite2D = $World/PlayableGround/GroundSnowA
+@onready var ground_snow_b: Sprite2D = $World/PlayableGround/GroundSnowB
+@onready var ground_ice: Sprite2D = $World/PlayableGround/GroundIce
+@onready var slope_sprite: Sprite2D = $World/Slope/SlopeSprite
+@onready var ice_shelf_sprite: Sprite2D = $World/IceShelf/IceShelfSprite
+@onready var exit_cliff: Sprite2D = $World/ExitRise/ExitCliff
+@onready var mist_patch: Sprite2D = $World/MistPatchNearGround
 
 var _intro_complete := false
 
 
 func _ready() -> void:
+	_assign_runtime_environment_art()
 	player.set_control_enabled(false)
 	player.look_east()
 	control_hint.visible = false
@@ -74,7 +89,7 @@ func _process(delta: float) -> void:
 
 func _start_intro() -> void:
 	await get_tree().process_frame
-	for index in SHOT_CAPTIONS.size():
+	for index in range(SHOT_CAPTIONS.size()):
 		var shot: Dictionary = SHOT_CAPTIONS[index]
 		var marker: Camera2D = get_node(SHOT_PATHS[index])
 		_set_caption(String(shot["title"]), String(shot["body"]))
@@ -141,5 +156,15 @@ func _animate_siblings(delta: float) -> void:
 				node.position = base + Vector2(sin(time * 0.9 + base.y * 0.02) * 10.0, cos(time * 0.6 + base.x * 0.01) * 8.0)
 			_:
 				node.position = base + Vector2(0.0, sin(time * 0.4 + base.x * 0.01) * 2.0)
-
 		node.set_meta("base_position", base)
+
+
+func _assign_runtime_environment_art() -> void:
+	mountain_backdrop.texture = MOUNTAIN_BACKDROP
+	ground_snow_a.texture = SNOW_PLATFORM
+	ground_snow_b.texture = SNOW_PLATFORM
+	ground_ice.texture = ICE_PLATFORM
+	slope_sprite.texture = SNOW_SLOPE
+	ice_shelf_sprite.texture = ICE_PLATFORM
+	exit_cliff.texture = EXIT_CLIFF
+	mist_patch.texture = MIST_PATCH

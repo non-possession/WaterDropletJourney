@@ -7,6 +7,24 @@ const STATE_TEXTURES := {
 	"cold": preload("res://assets/sprites/water_states/water_cold.png"),
 	"tense": preload("res://assets/sprites/water_states/water_tense.png"),
 }
+const IDLE_FRAMES: Array[Texture2D] = [
+	preload("res://assets/sprites/water_player/idle_00.png"),
+	preload("res://assets/sprites/water_player/idle_01.png"),
+	preload("res://assets/sprites/water_player/idle_02.png"),
+	preload("res://assets/sprites/water_player/idle_03.png"),
+	preload("res://assets/sprites/water_player/idle_04.png"),
+	preload("res://assets/sprites/water_player/idle_05.png"),
+]
+const MOVE_FRAMES: Array[Texture2D] = [
+	preload("res://assets/sprites/water_player_sheet/move_sheet_00.png"),
+	preload("res://assets/sprites/water_player_sheet/move_sheet_01.png"),
+	preload("res://assets/sprites/water_player_sheet/move_sheet_02.png"),
+	preload("res://assets/sprites/water_player_sheet/move_sheet_03.png"),
+	preload("res://assets/sprites/water_player_sheet/move_sheet_04.png"),
+	preload("res://assets/sprites/water_player_sheet/move_sheet_05.png"),
+	preload("res://assets/sprites/water_player_sheet/move_sheet_06.png"),
+	preload("res://assets/sprites/water_player_sheet/move_sheet_07.png"),
+]
 
 @export var move_speed := 125.0
 @export var accel := 420.0
@@ -23,6 +41,7 @@ var _base_scale := Vector2.ONE
 
 
 func _ready() -> void:
+	_assign_runtime_frames()
 	idle_sprite.play("idle")
 	_base_scale = idle_sprite.scale
 	set_state_visual("calm")
@@ -102,3 +121,20 @@ func _apply_motion_feel(input_x: float) -> void:
 	var stretch: float = clamp(absf(velocity.x) / move_speed, 0.0, 1.0)
 	idle_sprite.scale = idle_sprite.scale.lerp(_base_scale * Vector2(1.0 + stretch * 0.08, 1.0 - stretch * 0.05), 0.16)
 	inner_glow.position.x = move_toward(inner_glow.position.x, input_x * 4.0, 0.6)
+
+
+func _assign_runtime_frames() -> void:
+	var sprite_frames := SpriteFrames.new()
+	sprite_frames.add_animation("idle")
+	sprite_frames.set_animation_loop("idle", true)
+	sprite_frames.set_animation_speed("idle", 6.0)
+	for frame in IDLE_FRAMES:
+		sprite_frames.add_frame("idle", frame)
+
+	sprite_frames.add_animation("move")
+	sprite_frames.set_animation_loop("move", true)
+	sprite_frames.set_animation_speed("move", 10.0)
+	for frame in MOVE_FRAMES:
+		sprite_frames.add_frame("move", frame)
+
+	idle_sprite.sprite_frames = sprite_frames
