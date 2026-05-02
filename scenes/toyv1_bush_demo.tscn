@@ -1,0 +1,101 @@
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://scripts/toyv1_demo.gd" id="1_8y10q"]
+[ext_resource type="PackedScene" path="res://scenes/player.tscn" id="2_jh8pi"]
+[ext_resource type="PackedScene" path="res://scenes/bush_interaction.tscn" id="3_6r0qv"]
+[ext_resource type="Texture2D" path="res://assets/atlases/grass/grass_open_01.png" id="4_q7dpe"]
+[ext_resource type="Texture2D" path="res://assets/atlases/trees/tree_deciduous_right.png" id="5_a9e2v"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_ground_toy"]
+size = Vector2(1200, 84)
+
+[node name="ToyV1Root" type="Node2D"]
+script = ExtResource("1_8y10q")
+
+[node name="Environment" type="Node2D" parent="."]
+
+[node name="PlayableGround" type="StaticBody2D" parent="Environment"]
+position = Vector2(640, 656)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/PlayableGround"]
+shape = SubResource("RectangleShape2D_ground_toy")
+
+[node name="GroundVisual" type="Sprite2D" parent="Environment/PlayableGround"]
+texture = ExtResource("4_q7dpe")
+scale = Vector2(4.7, 1.45)
+
+[node name="BackdropTree" type="Sprite2D" parent="Environment"]
+texture = ExtResource("5_a9e2v")
+position = Vector2(1052, 450)
+scale = Vector2(1.25, 1.25)
+modulate = Color(0.84, 0.9, 0.88, 0.52)
+
+[node name="ForegroundStone" type="Polygon2D" parent="Environment"]
+position = Vector2(188, 632)
+color = Color(0.388235, 0.478431, 0.454902, 0.82)
+polygon = PackedVector2Array(-48, 22, -32, -8, 8, -22, 42, -6, 56, 24, 12, 38)
+
+[node name="BushInteraction" parent="." instance=ExtResource("3_6r0qv")]
+position = Vector2(760, 560)
+
+[node name="Player" parent="." instance=ExtResource("2_jh8pi")]
+position = Vector2(402, 584)
+
+[node name="Camera2D" type="Camera2D" parent="."]
+position = Vector2(640, 442)
+zoom = Vector2(0.96, 0.96)
+current = true
+limit_left = 0
+limit_top = 0
+limit_right = 1280
+limit_bottom = 720
+
+[node name="BackgroundCanvas" type="CanvasLayer" parent="."]
+layer = -10
+
+[node name="SkyBase" type="ColorRect" parent="BackgroundCanvas"]
+offset_right = 1280.0
+offset_bottom = 720.0
+mouse_filter = 2
+color = Color(0.694118, 0.831373, 0.968627, 1)
+
+[node name="SunMist" type="ColorRect" parent="BackgroundCanvas"]
+offset_left = 776.0
+offset_top = 24.0
+offset_right = 1280.0
+offset_bottom = 344.0
+mouse_filter = 2
+color = Color(1, 0.919608, 0.690196, 0.2)
+
+[node name="FarHaze" type="ColorRect" parent="BackgroundCanvas"]
+offset_top = 176.0
+offset_right = 1280.0
+offset_bottom = 512.0
+mouse_filter = 2
+color = Color(0.870588, 0.94902, 0.972549, 0.18)
+
+[node name="HUDCanvas" type="CanvasLayer" parent="."]
+layer = 10
+
+[node name="HUD" type="MarginContainer" parent="HUDCanvas"]
+offset_right = 1280.0
+offset_bottom = 720.0
+theme_override_constants/margin_left = 34
+theme_override_constants/margin_top = 28
+theme_override_constants/margin_right = 34
+theme_override_constants/margin_bottom = 28
+
+[node name="VBox" type="VBoxContainer" parent="HUDCanvas/HUD"]
+size_flags_horizontal = 3
+
+[node name="TitleLabel" type="Label" parent="HUDCanvas/HUD/VBox"]
+text = "Toy V1 / 水滴与灌木"
+
+[node name="ObjectiveLabel" type="Label" parent="HUDCanvas/HUD/VBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(480, 0)
+text = "靠近灌木并停驻，让它回应你。"
+autowrap_mode = 3
+
+[node name="ControlHint" type="Label" parent="HUDCanvas/HUD/VBox"]
+text = "操作：A / D 或方向键左右移动"

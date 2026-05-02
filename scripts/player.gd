@@ -42,6 +42,10 @@ const MOVE_WATER_SOUND := preload("res://assets/audio/ch1/protagonist_light_move
 
 var _control_enabled := false
 var _base_scale := Vector2.ONE
+var _sprite_base_position := Vector2.ZERO
+var _overlay_base_position := Vector2.ZERO
+var _glow_base_position := Vector2.ZERO
+var _expression_state_override := ""
 
 
 func _ready() -> void:
@@ -49,6 +53,9 @@ func _ready() -> void:
 	_setup_audio()
 	idle_sprite.play("idle")
 	_base_scale = idle_sprite.scale
+	_sprite_base_position = idle_sprite.position
+	_overlay_base_position = state_overlay.position
+	_glow_base_position = inner_glow.position
 	set_state_visual("calm")
 
 
@@ -80,6 +87,7 @@ func _physics_process(delta: float) -> void:
 	move_and_slide()
 	_apply_breathing()
 	_apply_motion_feel(input_x)
+	_apply_expression_state(input_x)
 	_update_audio(input_x)
 
 
@@ -117,17 +125,87 @@ func set_state_visual(state_name: String) -> void:
 			state_overlay.modulate = Color(1, 1, 1, 0.18)
 
 
+func set_expression_state(state_name: String) -> void:
+	_expression_state_override = state_name
+
+
+func clear_expression_state() -> void:
+	_expression_state_override = ""
+
+
 func _apply_breathing() -> void:
 	var time := Time.get_ticks_msec() / 1000.0
 	var breathe := 1.0 + sin(time * 2.1) * 0.02
 	idle_sprite.scale = _base_scale * Vector2(1.0 - (breathe - 1.0) * 0.35, breathe)
+	idle_sprite.position = _sprite_base_position
+	state_overlay.position = _overlay_base_position
+	inner_glow.position = _glow_base_position
 	inner_glow.modulate.a = 0.72 + sin(time * 1.8) * 0.06
 
 
 func _apply_motion_feel(input_x: float) -> void:
 	var stretch: float = clamp(absf(velocity.x) / move_speed, 0.0, 1.0)
 	idle_sprite.scale = idle_sprite.scale.lerp(_base_scale * Vector2(1.0 + stretch * 0.08, 1.0 - stretch * 0.05), 0.16)
-	inner_glow.position.x = move_toward(inner_glow.position.x, input_x * 4.0, 0.6)
+	inner_glow.position.x = move_toward(inner_glow.position.x, _glow_base_position.x + input_x * 4.0, 0.6)
+
+
+func _apply_expression_state(input_x: float) -> void:
+	var visual_state := _resolve_visual_state(input_x)
+	var target_sprite_scale := idle_sprite.scale
+	var target_sprite_position := idle_sprite.position
+	var target_overlay_position := state_overlay.position
+	var target_glow_position := inner_glow.position
+	var target_glow_alpha := inner_glow.modulate.a
+	var target_overlay_alpha := state_overlay.modulate.a
+	var should_use_move_animation := visual_state in ["move", "approach", "leave"] and absf(velocity.x) > 2.0
+
+	if should_use_move_animation and idle_sprite.animation != &"move":
+		idle_sprite.play("move")
+	elif not should_use_move_animation and idle_sprite.animation != &"idle":
+		idle_sprite.play("idle")
+
+	match visual_state:
+		"pause":
+			target_sprite_scale = _base_scale * Vector2(0.96, 1.05)
+			target_sprite_position += Vector2(0.0, 5.0)
+			target_overlay_position += Vector2(0.0, 4.0)
+			target_glow_position += Vector2(0.0, 3.0)
+			target_glow_alpha = 0.82
+			target_overlay_alpha = 0.24
+		"approach":
+			target_sprite_scale = _base_scale * Vector2(1.03, 0.98)
+			target_sprite_position += Vector2(signf(velocity.x) * 5.0, 2.0)
+			target_glow_position += Vector2(signf(velocity.x) * 6.0, 1.0)
+			target_glow_alpha = 0.86
+			target_overlay_alpha = 0.22
+		"nestle":
+			target_sprite_scale = _base_scale * Vector2(0.94, 1.08)
+			target_sprite_position += Vector2(-3.0, 9.0)
+			target_overlay_position += Vector2(-2.0, 7.0)
+			target_glow_position += Vector2(-5.0, 6.0)
+			target_glow_alpha = 0.94
+			target_overlay_alpha = 0.28
+		"leave":
+			target_sprite_scale = _base_scale * Vector2(1.08, 0.96)
+			target_sprite_position += Vector2(signf(velocity.x if absf(velocity.x) > 0.1 else 1.0) * 8.0, 1.0)
+			target_glow_position += Vector2(signf(velocity.x if absf(velocity.x) > 0.1 else 1.0) * 7.0, -1.0)
+			target_glow_alpha = 0.78
+			target_overlay_alpha = 0.18
+
+	idle_sprite.scale = idle_sprite.scale.lerp(target_sprite_scale, 0.22)
+	idle_sprite.position = idle_sprite.position.lerp(target_sprite_position, 0.22)
+	state_overlay.position = state_overlay.position.lerp(target_overlay_position, 0.2)
+	inner_glow.position = inner_glow.position.lerp(target_glow_position, 0.18)
+	inner_glow.modulate.a = lerp(inner_glow.modulate.a, target_glow_alpha, 0.18)
+	state_overlay.modulate.a = lerp(state_overlay.modulate.a, target_overlay_alpha, 0.16)
+
+
+func _resolve_visual_state(input_x: float) -> String:
+	if _expression_state_override != "":
+		return _expression_state_override
+	if absf(input_x) > 0.01:
+		return "move"
+	return "idle"
 
 
 func _assign_runtime_frames() -> void:

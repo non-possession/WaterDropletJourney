@@ -1,0 +1,62 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/bush_interaction.gd" id="1_6o8qj"]
+[ext_resource type="Texture2D" path="res://assets/atlases/trees/tree_deciduous_left.png" id="2_8kwt5"]
+[ext_resource type="Texture2D" path="res://assets/atlases/grass/grass_open_01.png" id="3_1j17i"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_detect"]
+radius = 110.0
+
+[node name="BushInteraction" type="Node2D"]
+script = ExtResource("1_6o8qj")
+
+[node name="DetectionArea" type="Area2D" parent="."]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="DetectionArea"]
+shape = SubResource("CircleShape2D_detect")
+
+[node name="BushPivot" type="Node2D" parent="."]
+
+[node name="BushGlow" type="Polygon2D" parent="BushPivot"]
+position = Vector2(0, -6)
+color = Color(0.694118, 1, 0.772549, 0.18)
+polygon = PackedVector2Array(-108, 12, -78, -48, -18, -86, 48, -84, 96, -42, 112, 8, 92, 48, 42, 84, -36, 78, -92, 46)
+
+[node name="FoliageBack" type="Sprite2D" parent="BushPivot"]
+texture = ExtResource("2_8kwt5")
+position = Vector2(-4, -14)
+scale = Vector2(1.06, 0.94)
+region_enabled = true
+region_rect = Rect2(4, 0, 186, 156)
+
+[node name="FoliageFront" type="Sprite2D" parent="BushPivot"]
+texture = ExtResource("2_8kwt5")
+position = Vector2(-4, -8)
+scale = Vector2(1.02, 0.92)
+region_enabled = true
+region_rect = Rect2(0, 52, 190, 128)
+
+[node name="GroundGrass" type="Sprite2D" parent="BushPivot"]
+texture = ExtResource("3_1j17i")
+position = Vector2(0, 26)
+scale = Vector2(0.78, 0.42)
+
+[node name="Sparkles" type="Node2D" parent="BushPivot"]
+
+[node name="SparkleA" type="Polygon2D" parent="BushPivot/Sparkles"]
+position = Vector2(-42, -52)
+color = Color(0.878431, 1, 0.901961, 0.2)
+polygon = PackedVector2Array(0, -9, 5, 0, 0, 9, -5, 0)
+
+[node name="SparkleB" type="Polygon2D" parent="BushPivot/Sparkles"]
+position = Vector2(16, -74)
+color = Color(0.878431, 1, 0.901961, 0.18)
+polygon = PackedVector2Array(0, -7, 4, 0, 0, 7, -4, 0)
+
+[node name="SparkleC" type="Polygon2D" parent="BushPivot/Sparkles"]
+position = Vector2(56, -38)
+color = Color(0.878431, 1, 0.901961, 0.16)
+polygon = PackedVector2Array(0, -8, 4, 0, 0, 8, -4, 0)
+
+[node name="ResponseAudio" type="AudioStreamPlayer" parent="."]
+bus = &"Master"

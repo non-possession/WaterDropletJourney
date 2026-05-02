@@ -41,7 +41,7 @@ const SHOT_PATHS := [
 	NodePath("ShotMarkers/Shot5"),
 	NodePath("ShotMarkers/Shot6"),
 ]
-const MOUNTAIN_BACKDROP := preload("res://assets/originals/雪山远景背景.png")
+const MOUNTAIN_BACKDROP := preload("res://assets/originals/旧版本/雪山远景背景.png")
 const SNOW_PLATFORM := preload("res://assets/tiles/ch1_snow_mid/snow_platform_long_01.png")
 const ICE_PLATFORM := preload("res://assets/tiles/ch1_snow_mid/ice_platform_long_01.png")
 const SNOW_SLOPE := preload("res://assets/tiles/ch1_snow_mid/snow_platform_slope_01.png")
