@@ -3,27 +3,28 @@ extends CharacterBody2D
 class_name WaterPlayer
 
 const STATE_TEXTURES := {
-	"calm": preload("res://assets/sprites/water_states/water_calm.png"),
-	"cold": preload("res://assets/sprites/water_states/water_cold.png"),
-	"tense": preload("res://assets/sprites/water_states/water_tense.png"),
+	"calm": preload("res://assets/sprites/water_player_spirit/overlay_calm.png"),
+	"cold": preload("res://assets/sprites/water_player_spirit/overlay_cold.png"),
+	"tense": preload("res://assets/sprites/water_player_spirit/overlay_tense.png"),
 }
+const INNER_GLOW_TEXTURE := preload("res://assets/sprites/water_player_spirit/inner_glow.png")
 const IDLE_FRAMES: Array[Texture2D] = [
-	preload("res://assets/sprites/water_player/idle_00.png"),
-	preload("res://assets/sprites/water_player/idle_01.png"),
-	preload("res://assets/sprites/water_player/idle_02.png"),
-	preload("res://assets/sprites/water_player/idle_03.png"),
-	preload("res://assets/sprites/water_player/idle_04.png"),
-	preload("res://assets/sprites/water_player/idle_05.png"),
+	preload("res://assets/sprites/water_player_spirit/idle_00.png"),
+	preload("res://assets/sprites/water_player_spirit/idle_01.png"),
+	preload("res://assets/sprites/water_player_spirit/idle_02.png"),
+	preload("res://assets/sprites/water_player_spirit/idle_03.png"),
+	preload("res://assets/sprites/water_player_spirit/idle_04.png"),
+	preload("res://assets/sprites/water_player_spirit/idle_05.png"),
 ]
 const MOVE_FRAMES: Array[Texture2D] = [
-	preload("res://assets/sprites/water_player_sheet/move_sheet_00.png"),
-	preload("res://assets/sprites/water_player_sheet/move_sheet_01.png"),
-	preload("res://assets/sprites/water_player_sheet/move_sheet_02.png"),
-	preload("res://assets/sprites/water_player_sheet/move_sheet_03.png"),
-	preload("res://assets/sprites/water_player_sheet/move_sheet_04.png"),
-	preload("res://assets/sprites/water_player_sheet/move_sheet_05.png"),
-	preload("res://assets/sprites/water_player_sheet/move_sheet_06.png"),
-	preload("res://assets/sprites/water_player_sheet/move_sheet_07.png"),
+	preload("res://assets/sprites/water_player_spirit/move_00.png"),
+	preload("res://assets/sprites/water_player_spirit/move_01.png"),
+	preload("res://assets/sprites/water_player_spirit/move_02.png"),
+	preload("res://assets/sprites/water_player_spirit/move_03.png"),
+	preload("res://assets/sprites/water_player_spirit/move_04.png"),
+	preload("res://assets/sprites/water_player_spirit/move_05.png"),
+	preload("res://assets/sprites/water_player_spirit/move_06.png"),
+	preload("res://assets/sprites/water_player_spirit/move_07.png"),
 ]
 const IDLE_WATER_SOUND := preload("res://assets/audio/ch1/protagonist_idle_subtle_water.wav")
 const MOVE_WATER_SOUND := preload("res://assets/audio/ch1/protagonist_light_movement_water.wav")
@@ -51,6 +52,7 @@ var _expression_state_override := ""
 func _ready() -> void:
 	_assign_runtime_frames()
 	_setup_audio()
+	inner_glow.texture = INNER_GLOW_TEXTURE
 	idle_sprite.play("idle")
 	_base_scale = idle_sprite.scale
 	_sprite_base_position = idle_sprite.position
