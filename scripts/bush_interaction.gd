@@ -21,9 +21,10 @@ const RESPONSE_SOUND := preload("res://assets/audio/ch1/control_handoff_subtle_c
 @onready var detection_area: Area2D = $DetectionArea
 @onready var detection_shape: CollisionShape2D = $DetectionArea/CollisionShape2D
 @onready var bush_pivot: Node2D = $BushPivot
-@onready var bush_glow: Polygon2D = $BushPivot/BushGlow
+@onready var bush_glow: Sprite2D = $BushPivot/BushGlow
 @onready var foliage_back: Sprite2D = $BushPivot/FoliageBack
 @onready var foliage_front: Sprite2D = $BushPivot/FoliageFront
+@onready var contact_leaves: Sprite2D = $BushPivot/ContactLeaves
 @onready var ground_grass: Sprite2D = $BushPivot/GroundGrass
 @onready var sparkle_a: Polygon2D = $BushPivot/Sparkles/SparkleA
 @onready var sparkle_b: Polygon2D = $BushPivot/Sparkles/SparkleB
@@ -110,6 +111,8 @@ func _process(delta: float) -> void:
 	bush_pivot.rotation = sway_wave * (0.5 + _presence * 1.2) * sway_amount / 10.0
 	foliage_front.position.y = -8.0 + sin(time * 2.1 + 0.7) * (1.0 + _presence * 2.0)
 	foliage_front.position.x = -4.0 + sin(time * 1.15) * _presence * 1.2
+	contact_leaves.position.y = 16.0 + sin(time * 2.35 + 1.4) * (0.35 + _presence * 1.3)
+	contact_leaves.position.x = sin(time * 1.45 + 0.4) * _presence * 0.9
 	ground_grass.position.y = 26.0 + sin(time * 1.6) * _presence * 0.8
 
 	var sparkle_alpha: float = 0.08 + max(_presence, 0.0) * 0.34
@@ -130,8 +133,9 @@ func get_presence_ratio() -> float:
 
 func _update_visuals(presence: float) -> void:
 	bush_glow.modulate = Color(0.74, 1.0, 0.78, 0.06 + presence * glow_strength * 0.34)
-	foliage_back.modulate = Color(0.86 + presence * 0.09, 0.93 + presence * 0.06, 0.88 + presence * 0.02, 1.0)
-	foliage_front.modulate = Color(0.92 + presence * 0.08, 0.99, 0.9 + presence * 0.04, 0.92 + presence * 0.08)
+	foliage_back.modulate = Color(0.74 + presence * 0.08, 0.86 + presence * 0.07, 0.75 + presence * 0.04, 0.96)
+	foliage_front.modulate = Color(0.86 + presence * 0.08, 0.96 + presence * 0.04, 0.78 + presence * 0.07, 0.96 + presence * 0.04)
+	contact_leaves.modulate = Color(0.94 + presence * 0.06, 1.0, 0.78 + presence * 0.08, 0.55 + presence * 0.43)
 	ground_grass.modulate = Color(0.9 + presence * 0.08, 0.98, 0.9 + presence * 0.06, 1.0)
 
 

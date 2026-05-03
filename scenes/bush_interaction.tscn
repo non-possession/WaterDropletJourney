@@ -1,8 +1,11 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene load_steps=9 format=3]
 
 [ext_resource type="Script" path="res://scripts/bush_interaction.gd" id="1_6o8qj"]
-[ext_resource type="Texture2D" path="res://assets/atlases/trees/tree_deciduous_left.png" id="2_8kwt5"]
 [ext_resource type="Texture2D" path="res://assets/atlases/grass/grass_open_01.png" id="3_1j17i"]
+[ext_resource type="Texture2D" path="res://assets/sprites/bush_interaction/back_leaves.png" id="4_x7l8q"]
+[ext_resource type="Texture2D" path="res://assets/sprites/bush_interaction/front_leaves.png" id="5_bl3ki"]
+[ext_resource type="Texture2D" path="res://assets/sprites/bush_interaction/contact_leaves.png" id="6_v03o4"]
+[ext_resource type="Texture2D" path="res://assets/sprites/bush_interaction/local_glow_mask.png" id="7_i4omw"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_detect"]
 radius = 110.0
@@ -17,24 +20,30 @@ shape = SubResource("CircleShape2D_detect")
 
 [node name="BushPivot" type="Node2D" parent="."]
 
-[node name="BushGlow" type="Polygon2D" parent="BushPivot"]
-position = Vector2(0, -6)
-color = Color(0.694118, 1, 0.772549, 0.18)
-polygon = PackedVector2Array(-108, 12, -78, -48, -18, -86, 48, -84, 96, -42, 112, 8, 92, 48, 42, 84, -36, 78, -92, 46)
+[node name="BushGlow" type="Sprite2D" parent="BushPivot"]
+texture = ExtResource("7_i4omw")
+position = Vector2(0, -24)
+scale = Vector2(0.48, 0.48)
+modulate = Color(0.74, 1, 0.78, 0.08)
 
 [node name="FoliageBack" type="Sprite2D" parent="BushPivot"]
-texture = ExtResource("2_8kwt5")
-position = Vector2(-4, -14)
-scale = Vector2(1.06, 0.94)
-region_enabled = true
-region_rect = Rect2(4, 0, 186, 156)
+texture = ExtResource("4_x7l8q")
+position = Vector2(-8, -32)
+scale = Vector2(0.46, 0.46)
+modulate = Color(0.74, 0.86, 0.75, 0.96)
 
 [node name="FoliageFront" type="Sprite2D" parent="BushPivot"]
-texture = ExtResource("2_8kwt5")
-position = Vector2(-4, -8)
-scale = Vector2(1.02, 0.92)
-region_enabled = true
-region_rect = Rect2(0, 52, 190, 128)
+texture = ExtResource("5_bl3ki")
+position = Vector2(0, -8)
+scale = Vector2(0.46, 0.46)
+modulate = Color(0.86, 0.96, 0.78, 0.96)
+
+[node name="ContactLeaves" type="Sprite2D" parent="BushPivot"]
+texture = ExtResource("6_v03o4")
+position = Vector2(0, 16)
+scale = Vector2(0.43, 0.43)
+modulate = Color(0.94, 1, 0.78, 0.58)
+z_index = 6
 
 [node name="GroundGrass" type="Sprite2D" parent="BushPivot"]
 texture = ExtResource("3_1j17i")

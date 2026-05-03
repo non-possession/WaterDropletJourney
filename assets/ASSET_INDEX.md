@@ -41,8 +41,17 @@
 - `assets/sprites/water_player_layers/`: 当前主角水滴的分层表现资源，包括主体、外轮廓、内亮核、高光、拖尾和姿态层
 - `assets/sprites/water_siblings/`: 第一章开场中用于群体水灵氛围的兄弟姐妹水滴资源
 
+## Bush Interaction Sprites
+
+- `assets/originals/toyv1_bush_layers_sheet.png`: toyv1 灌木互动分层原始素材板
+- `assets/sprites/bush_interaction/back_leaves.png`: 灌木后景叶层，负责体积和深色背景
+- `assets/sprites/bush_interaction/front_leaves.png`: 灌木前景叶层，负责主要可见轮廓
+- `assets/sprites/bush_interaction/contact_leaves.png`: 与水滴接触时覆盖在前方的稀疏叶片
+- `assets/sprites/bush_interaction/local_glow_mask.png`: 停驻回应时使用的局部柔光遮罩
+
 ## Suggested Usage
 
 - 地图拼接或参考切片：使用 `assets/tiles/b2/`
 - 水滴情绪状态切换：使用 `assets/sprites/water_states/`
 - 主角水滴当前可玩表现：优先使用 `assets/sprites/water_player_spirit/` 与 `assets/sprites/water_player_layers/`
+- 水滴与灌木互动：使用 `assets/sprites/bush_interaction/` 的分层素材，避免直接把整张 AI 插画放进场景
