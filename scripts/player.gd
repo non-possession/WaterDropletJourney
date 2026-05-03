@@ -66,11 +66,13 @@ const MOVE_WATER_SOUND := preload("res://assets/audio/ch1/protagonist_light_move
 @export var body_stretch_strength := 0.13
 @export var core_lag_strength := 9.0
 @export var highlight_drift_strength := 6.0
-@export var trail_strength := 0.24
-@export var contact_glow_strength := 0.2
+@export var trail_strength := 0.12
+@export var contact_glow_strength := 0.12
 @export var stop_settle_time := 0.22
 
 @onready var idle_sprite: AnimatedSprite2D = $AnimatedSprite2D
+@onready var soft_shadow: Polygon2D = $SoftShadow
+@onready var wet_trace: Polygon2D = $WetTrace
 @onready var motion_trail: Sprite2D = $MotionTrail
 @onready var expression_pose: Sprite2D = $ExpressionPose
 @onready var state_overlay: Sprite2D = $StateOverlay
@@ -89,6 +91,8 @@ var _glow_base_position := Vector2.ZERO
 var _highlight_base_position := Vector2.ZERO
 var _highlight_base_scale := Vector2.ONE
 var _trail_base_position := Vector2.ZERO
+var _shadow_base_position := Vector2.ZERO
+var _wet_trace_base_position := Vector2.ZERO
 var _contact_base_position := Vector2.ZERO
 var _expression_state_override := ""
 var _visual_state := "idle"
@@ -119,6 +123,8 @@ func _ready() -> void:
 	_highlight_base_position = surface_highlight.position
 	_highlight_base_scale = surface_highlight.scale
 	_trail_base_position = motion_trail.position
+	_shadow_base_position = soft_shadow.position
+	_wet_trace_base_position = wet_trace.position
 	_contact_base_position = contact_glow.position
 	expression_pose.modulate.a = 0.0
 	set_state_visual("calm")
@@ -190,13 +196,13 @@ func set_state_visual(state_name: String) -> void:
 	match state_name:
 		"cold":
 			state_overlay.texture = STATE_TEXTURES["cold"]
-			state_overlay.modulate = Color(1, 1, 1, 0.34)
+			state_overlay.modulate = Color(0.88, 0.96, 0.98, 0.2)
 		"tense":
 			state_overlay.texture = STATE_TEXTURES["tense"]
-			state_overlay.modulate = Color(1, 1, 1, 0.22)
+			state_overlay.modulate = Color(0.86, 0.95, 0.94, 0.14)
 		_:
 			state_overlay.texture = STATE_TEXTURES["calm"]
-			state_overlay.modulate = Color(1, 1, 1, 0.18)
+			state_overlay.modulate = Color(0.82, 0.95, 0.94, 0.11)
 
 
 func set_expression_state(state_name: String) -> void:
@@ -225,9 +231,9 @@ func _apply_breathing() -> void:
 	idle_sprite.position = _sprite_base_position
 	state_overlay.position = _overlay_base_position
 	inner_glow.position = _glow_base_position
-	inner_glow.modulate.a = 0.72 + sin(time * 1.8) * 0.06
+	inner_glow.modulate = Color(0.72, 0.94, 0.92, 0.31 + sin(time * 1.8) * 0.025)
 	surface_highlight.position = _highlight_base_position
-	surface_highlight.modulate.a = 0.08 + sin(time * 1.25 + 0.6) * 0.025
+	surface_highlight.modulate = Color(0.9, 1.0, 0.96, 0.05 + sin(time * 1.25 + 0.6) * 0.014)
 
 
 func _apply_motion_feel(input_x: float) -> void:
@@ -288,10 +294,10 @@ func _apply_expression_state(input_x: float, delta: float) -> void:
 			target_overlay_position += Vector2(0.0, 4.0)
 			target_glow_position += Vector2(0.0, 3.0)
 			target_highlight_position += Vector2(0.0, 2.0)
-			target_glow_alpha = 0.78 + ease_in * 0.12
-			target_highlight_alpha = 0.08
-			target_pose_alpha = 0.18
-			target_overlay_alpha = 0.24
+			target_glow_alpha = 0.34 + ease_in * 0.08
+			target_highlight_alpha = 0.045
+			target_pose_alpha = 0.11
+			target_overlay_alpha = 0.14
 		"approach":
 			var direction := signf(velocity.x) if absf(velocity.x) > 0.1 else _last_move_direction
 			target_sprite_scale = _base_scale * Vector2(1.04, 0.975)
@@ -299,10 +305,10 @@ func _apply_expression_state(input_x: float, delta: float) -> void:
 			target_pose_position = target_sprite_position
 			target_glow_position += Vector2(direction * 8.0, 1.0)
 			target_highlight_position += Vector2(-direction * 5.0, 1.0)
-			target_glow_alpha = 0.82 + ease_in * 0.06
-			target_highlight_alpha = 0.11
-			target_pose_alpha = 0.14
-			target_overlay_alpha = 0.22
+			target_glow_alpha = 0.36 + ease_in * 0.05
+			target_highlight_alpha = 0.06
+			target_pose_alpha = 0.1
+			target_overlay_alpha = 0.13
 		"nestle":
 			target_sprite_scale = _base_scale * Vector2(0.925, 1.11)
 			target_sprite_position += Vector2(-4.0, 10.0)
@@ -310,10 +316,10 @@ func _apply_expression_state(input_x: float, delta: float) -> void:
 			target_overlay_position += Vector2(-3.0, 8.0)
 			target_glow_position += Vector2(-7.0, 7.0)
 			target_highlight_position += Vector2(-7.0, 5.0)
-			target_glow_alpha = 0.9 + sin(Time.get_ticks_msec() / 1000.0 * 1.35) * 0.035
-			target_highlight_alpha = 0.075
-			target_pose_alpha = 0.2
-			target_overlay_alpha = 0.24
+			target_glow_alpha = 0.42 + sin(Time.get_ticks_msec() / 1000.0 * 1.35) * 0.018
+			target_highlight_alpha = 0.045
+			target_pose_alpha = 0.12
+			target_overlay_alpha = 0.15
 		"leave":
 			var direction := signf(velocity.x) if absf(velocity.x) > 0.1 else _last_move_direction
 			target_sprite_scale = _base_scale * Vector2(1.11, 0.945)
@@ -321,10 +327,10 @@ func _apply_expression_state(input_x: float, delta: float) -> void:
 			target_pose_position = target_sprite_position
 			target_glow_position += Vector2(direction * 8.0, -1.0)
 			target_highlight_position += Vector2(-direction * 7.0, -1.0)
-			target_glow_alpha = 0.78
-			target_highlight_alpha = 0.12
-			target_pose_alpha = 0.22
-			target_overlay_alpha = 0.16
+			target_glow_alpha = 0.34
+			target_highlight_alpha = 0.06
+			target_pose_alpha = 0.13
+			target_overlay_alpha = 0.1
 
 	var sprite_lerp: float = 1.0 - exp(-delta * 13.0)
 	var detail_lerp: float = 1.0 - exp(-delta * 10.0)
@@ -358,12 +364,12 @@ func _apply_feedback_layers(input_x: float, delta: float) -> void:
 	_contact_intensity = lerp(_contact_intensity, target_contact, 1.0 - exp(-delta * 4.8))
 	var trail_alpha := speed_mix * trail_strength
 	if visual_state == "approach":
-		trail_alpha += 0.06
+		trail_alpha += 0.025
 	elif visual_state == "leave":
-		trail_alpha += 0.11
+		trail_alpha += 0.045
 		motion_trail.texture = TRAIL_TEXTURES["leave"]
 	elif visual_state == "nestle":
-		trail_alpha = 0.04
+		trail_alpha = 0.018
 		motion_trail.texture = TRAIL_TEXTURES["soft"]
 	else:
 		motion_trail.texture = TRAIL_TEXTURES["motion"]
@@ -377,11 +383,16 @@ func _apply_feedback_layers(input_x: float, delta: float) -> void:
 		_trail_base_scale * Vector2(1.0 + speed_mix * 0.26, 0.86 - speed_mix * 0.18),
 		1.0 - exp(-delta * 8.0)
 	)
-	motion_trail.modulate = Color(0.56, 0.93, 1.0, clamp(trail_alpha, 0.0, 0.24))
+	motion_trail.modulate = Color(0.54, 0.86, 0.9, clamp(trail_alpha, 0.0, 0.13))
 
 	var time := Time.get_ticks_msec() / 1000.0
+	var contact_sway := sin(time * 1.6) * 2.5 * _contact_intensity
+	soft_shadow.position = _shadow_base_position + Vector2(contact_sway * 0.35, 0.0)
+	soft_shadow.color = Color(0.04, 0.08, 0.07, 0.11 + speed_mix * 0.025 + _contact_intensity * 0.055)
+	wet_trace.position = _wet_trace_base_position + Vector2(contact_sway, 0.0)
+	wet_trace.color = Color(0.52, 0.78, 0.68, 0.025 + _contact_intensity * 0.095)
 	contact_glow.position = _contact_base_position + Vector2(sin(time * 1.6) * 2.5 * _contact_intensity, 0.0)
-	contact_glow.color = Color(0.58, 1.0, 0.87, contact_glow_strength * _contact_intensity)
+	contact_glow.color = Color(0.58, 0.88, 0.76, contact_glow_strength * _contact_intensity)
 
 
 func _update_movement_phase(raw_input_x: float, delta: float) -> void:

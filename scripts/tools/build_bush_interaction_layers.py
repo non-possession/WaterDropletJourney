@@ -5,6 +5,7 @@ from PIL import Image, ImageFilter
 ROOT = Path("/Users/mistluo/Codes/godot/WaterJourney")
 SOURCE = ROOT / "assets/originals/toyv1_bush_layers_sheet.png"
 OUT = ROOT / "assets/sprites/bush_interaction"
+CANVAS_SIZE = (704, 704)
 
 
 def chroma_to_alpha(image: Image.Image) -> Image.Image:
@@ -39,6 +40,15 @@ def trim(image: Image.Image, padding: int = 12) -> Image.Image:
     return image.crop((left, top, right, bottom))
 
 
+def normalize_canvas(image: Image.Image, y_bias: int = 0) -> Image.Image:
+    """Put each layer on the same transparent canvas so anchors stay stable."""
+    canvas = Image.new("RGBA", CANVAS_SIZE, (0, 0, 0, 0))
+    x = (CANVAS_SIZE[0] - image.width) // 2
+    y = (CANVAS_SIZE[1] - image.height) // 2 + y_bias
+    canvas.alpha_composite(image, (x, y))
+    return canvas
+
+
 def make_presence_mask(image: Image.Image) -> Image.Image:
     image = chroma_to_alpha(image)
     alpha = image.getchannel("A").filter(ImageFilter.GaussianBlur(1.4))
@@ -63,9 +73,11 @@ def main() -> None:
         crop = sheet.crop(box)
         if name == "local_glow_mask":
             layer = make_presence_mask(crop)
-            layer = trim(layer, 18)
+            layer = normalize_canvas(trim(layer, 18), 18)
         else:
             layer = trim(chroma_to_alpha(crop), 16)
+            y_bias = 28 if name == "contact_leaves" else 0
+            layer = normalize_canvas(layer, y_bias)
         layer.save(OUT / f"{name}.png")
 
 

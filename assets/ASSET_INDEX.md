@@ -55,3 +55,4 @@
 - 水滴情绪状态切换：使用 `assets/sprites/water_states/`
 - 主角水滴当前可玩表现：优先使用 `assets/sprites/water_player_spirit/` 与 `assets/sprites/water_player_layers/`
 - 水滴与灌木互动：使用 `assets/sprites/bush_interaction/` 的分层素材，避免直接把整张 AI 插画放进场景
+- sprite 透明背景和画布安全检查：运行 `python3 scripts/tools/audit_sprite_layers.py`

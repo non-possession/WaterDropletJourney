@@ -132,11 +132,11 @@ func get_presence_ratio() -> float:
 
 
 func _update_visuals(presence: float) -> void:
-	bush_glow.modulate = Color(0.74, 1.0, 0.78, 0.06 + presence * glow_strength * 0.34)
-	foliage_back.modulate = Color(0.74 + presence * 0.08, 0.86 + presence * 0.07, 0.75 + presence * 0.04, 0.96)
-	foliage_front.modulate = Color(0.86 + presence * 0.08, 0.96 + presence * 0.04, 0.78 + presence * 0.07, 0.96 + presence * 0.04)
-	contact_leaves.modulate = Color(0.94 + presence * 0.06, 1.0, 0.78 + presence * 0.08, 0.55 + presence * 0.43)
-	ground_grass.modulate = Color(0.9 + presence * 0.08, 0.98, 0.9 + presence * 0.06, 1.0)
+	bush_glow.modulate = Color(0.72, 0.94, 0.76, 0.035 + presence * glow_strength * 0.18)
+	foliage_back.modulate = Color(0.62 + presence * 0.06, 0.74 + presence * 0.05, 0.58 + presence * 0.04, 0.9)
+	foliage_front.modulate = Color(0.72 + presence * 0.07, 0.84 + presence * 0.05, 0.58 + presence * 0.08, 0.93 + presence * 0.04)
+	contact_leaves.modulate = Color(0.78 + presence * 0.08, 0.9 + presence * 0.05, 0.58 + presence * 0.12, 0.42 + presence * 0.38)
+	ground_grass.modulate = Color(0.72 + presence * 0.05, 0.82 + presence * 0.05, 0.68 + presence * 0.04, 0.78)
 
 
 func _on_body_entered(body: Node) -> void:
