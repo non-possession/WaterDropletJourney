@@ -7,7 +7,34 @@ const STATE_TEXTURES := {
 	"cold": preload("res://assets/sprites/water_player_spirit/overlay_cold.png"),
 	"tense": preload("res://assets/sprites/water_player_spirit/overlay_tense.png"),
 }
-const INNER_GLOW_TEXTURE := preload("res://assets/sprites/water_player_spirit/inner_glow.png")
+const LAYER_CORE_TEXTURES := {
+	"idle": preload("res://assets/sprites/water_player_layers/core_idle.png"),
+	"move": preload("res://assets/sprites/water_player_layers/core_start.png"),
+	"pause": preload("res://assets/sprites/water_player_layers/core_nestle.png"),
+	"approach": preload("res://assets/sprites/water_player_layers/core_start.png"),
+	"nestle": preload("res://assets/sprites/water_player_layers/core_nestle.png"),
+	"leave": preload("res://assets/sprites/water_player_layers/core_leave.png"),
+}
+const LAYER_HIGHLIGHT_TEXTURES := {
+	"idle": preload("res://assets/sprites/water_player_layers/highlight_idle.png"),
+	"move": preload("res://assets/sprites/water_player_layers/highlight_start.png"),
+	"pause": preload("res://assets/sprites/water_player_layers/highlight_nestle.png"),
+	"approach": preload("res://assets/sprites/water_player_layers/highlight_start.png"),
+	"nestle": preload("res://assets/sprites/water_player_layers/highlight_nestle.png"),
+	"leave": preload("res://assets/sprites/water_player_layers/highlight_leave.png"),
+}
+const TRAIL_TEXTURES := {
+	"motion": preload("res://assets/sprites/water_player_layers/trail_motion.png"),
+	"leave": preload("res://assets/sprites/water_player_layers/trail_leave.png"),
+	"soft": preload("res://assets/sprites/water_player_layers/highlight_nestle.png"),
+}
+const POSE_TEXTURES := {
+	"move": preload("res://assets/sprites/water_player_layers/pose_start.png"),
+	"approach": preload("res://assets/sprites/water_player_layers/pose_start.png"),
+	"pause": preload("res://assets/sprites/water_player_layers/pose_stop.png"),
+	"nestle": preload("res://assets/sprites/water_player_layers/pose_nestle.png"),
+	"leave": preload("res://assets/sprites/water_player_layers/pose_leave.png"),
+}
 const IDLE_FRAMES: Array[Texture2D] = [
 	preload("res://assets/sprites/water_player_spirit/idle_00.png"),
 	preload("res://assets/sprites/water_player_spirit/idle_01.png"),
@@ -45,6 +72,7 @@ const MOVE_WATER_SOUND := preload("res://assets/audio/ch1/protagonist_light_move
 
 @onready var idle_sprite: AnimatedSprite2D = $AnimatedSprite2D
 @onready var motion_trail: Sprite2D = $MotionTrail
+@onready var expression_pose: Sprite2D = $ExpressionPose
 @onready var state_overlay: Sprite2D = $StateOverlay
 @onready var inner_glow: Sprite2D = $InnerGlow
 @onready var surface_highlight: Sprite2D = $SurfaceHighlight
@@ -72,13 +100,16 @@ var _start_pulse := 0.0
 var _stop_settle := 0.0
 var _contact_intensity := 0.0
 var _target_contact_intensity := 0.0
+var _pose_alpha := 0.0
+var _target_pose_alpha := 0.0
 
 
 func _ready() -> void:
 	_assign_runtime_frames()
 	_setup_audio()
-	inner_glow.texture = INNER_GLOW_TEXTURE
-	motion_trail.texture = STATE_TEXTURES["calm"]
+	inner_glow.texture = LAYER_CORE_TEXTURES["idle"]
+	surface_highlight.texture = LAYER_HIGHLIGHT_TEXTURES["idle"]
+	motion_trail.texture = TRAIL_TEXTURES["motion"]
 	idle_sprite.play("idle")
 	_base_scale = idle_sprite.scale
 	_trail_base_scale = motion_trail.scale
@@ -89,6 +120,7 @@ func _ready() -> void:
 	_highlight_base_scale = surface_highlight.scale
 	_trail_base_position = motion_trail.position
 	_contact_base_position = contact_glow.position
+	expression_pose.modulate.a = 0.0
 	set_state_visual("calm")
 
 
@@ -148,6 +180,7 @@ func look_direction(direction: float) -> void:
 		return
 	idle_sprite.flip_h = direction < 0.0
 	motion_trail.flip_h = direction < 0.0
+	expression_pose.flip_h = direction < 0.0
 	state_overlay.flip_h = direction < 0.0
 	inner_glow.flip_h = direction < 0.0
 	surface_highlight.flip_h = direction < 0.0
@@ -224,16 +257,20 @@ func _apply_expression_state(input_x: float, delta: float) -> void:
 	if visual_state != _visual_state:
 		_visual_state = visual_state
 		_state_age = 0.0
+		_update_layer_textures(visual_state)
+		_update_pose_texture(visual_state)
 	else:
 		_state_age += delta
 
 	var target_sprite_scale := idle_sprite.scale
 	var target_sprite_position := idle_sprite.position
+	var target_pose_position := expression_pose.position
 	var target_overlay_position := state_overlay.position
 	var target_glow_position := inner_glow.position
 	var target_highlight_position := surface_highlight.position
 	var target_glow_alpha := inner_glow.modulate.a
 	var target_highlight_alpha := surface_highlight.modulate.a
+	var target_pose_alpha := 0.0
 	var target_overlay_alpha := state_overlay.modulate.a
 	var ease_in: float = 1.0 - exp(-_state_age * 7.0)
 	var should_use_move_animation := visual_state in ["move", "approach", "leave"] and absf(velocity.x) > 2.0
@@ -247,49 +284,62 @@ func _apply_expression_state(input_x: float, delta: float) -> void:
 		"pause":
 			target_sprite_scale = _base_scale * Vector2(0.95, 1.07)
 			target_sprite_position += Vector2(0.0, 6.0)
+			target_pose_position = target_sprite_position
 			target_overlay_position += Vector2(0.0, 4.0)
 			target_glow_position += Vector2(0.0, 3.0)
 			target_highlight_position += Vector2(0.0, 2.0)
 			target_glow_alpha = 0.78 + ease_in * 0.12
 			target_highlight_alpha = 0.08
+			target_pose_alpha = 0.18
 			target_overlay_alpha = 0.24
 		"approach":
 			var direction := signf(velocity.x) if absf(velocity.x) > 0.1 else _last_move_direction
 			target_sprite_scale = _base_scale * Vector2(1.04, 0.975)
 			target_sprite_position += Vector2(direction * 5.0, 2.0)
+			target_pose_position = target_sprite_position
 			target_glow_position += Vector2(direction * 8.0, 1.0)
 			target_highlight_position += Vector2(-direction * 5.0, 1.0)
 			target_glow_alpha = 0.82 + ease_in * 0.06
 			target_highlight_alpha = 0.11
+			target_pose_alpha = 0.14
 			target_overlay_alpha = 0.22
 		"nestle":
 			target_sprite_scale = _base_scale * Vector2(0.925, 1.11)
 			target_sprite_position += Vector2(-4.0, 10.0)
+			target_pose_position = target_sprite_position
 			target_overlay_position += Vector2(-3.0, 8.0)
 			target_glow_position += Vector2(-7.0, 7.0)
 			target_highlight_position += Vector2(-7.0, 5.0)
 			target_glow_alpha = 0.9 + sin(Time.get_ticks_msec() / 1000.0 * 1.35) * 0.035
 			target_highlight_alpha = 0.075
+			target_pose_alpha = 0.2
 			target_overlay_alpha = 0.24
 		"leave":
 			var direction := signf(velocity.x) if absf(velocity.x) > 0.1 else _last_move_direction
 			target_sprite_scale = _base_scale * Vector2(1.11, 0.945)
 			target_sprite_position += Vector2(direction * 9.0, 1.0)
+			target_pose_position = target_sprite_position
 			target_glow_position += Vector2(direction * 8.0, -1.0)
 			target_highlight_position += Vector2(-direction * 7.0, -1.0)
 			target_glow_alpha = 0.78
 			target_highlight_alpha = 0.12
+			target_pose_alpha = 0.22
 			target_overlay_alpha = 0.16
 
 	var sprite_lerp: float = 1.0 - exp(-delta * 13.0)
 	var detail_lerp: float = 1.0 - exp(-delta * 10.0)
 	idle_sprite.scale = idle_sprite.scale.lerp(target_sprite_scale, sprite_lerp)
 	idle_sprite.position = idle_sprite.position.lerp(target_sprite_position, sprite_lerp)
+	expression_pose.scale = expression_pose.scale.lerp(target_sprite_scale, sprite_lerp)
+	expression_pose.position = expression_pose.position.lerp(target_pose_position, sprite_lerp)
 	state_overlay.position = state_overlay.position.lerp(target_overlay_position, detail_lerp)
 	inner_glow.position = inner_glow.position.lerp(target_glow_position, detail_lerp)
 	surface_highlight.position = surface_highlight.position.lerp(target_highlight_position, detail_lerp)
 	inner_glow.modulate.a = lerp(inner_glow.modulate.a, target_glow_alpha, detail_lerp)
 	surface_highlight.modulate.a = lerp(surface_highlight.modulate.a, target_highlight_alpha, detail_lerp)
+	_target_pose_alpha = target_pose_alpha
+	_pose_alpha = lerp(_pose_alpha, _target_pose_alpha, detail_lerp)
+	expression_pose.modulate.a = _pose_alpha
 	state_overlay.modulate.a = lerp(state_overlay.modulate.a, target_overlay_alpha, detail_lerp)
 
 
@@ -311,8 +361,12 @@ func _apply_feedback_layers(input_x: float, delta: float) -> void:
 		trail_alpha += 0.06
 	elif visual_state == "leave":
 		trail_alpha += 0.11
+		motion_trail.texture = TRAIL_TEXTURES["leave"]
 	elif visual_state == "nestle":
 		trail_alpha = 0.04
+		motion_trail.texture = TRAIL_TEXTURES["soft"]
+	else:
+		motion_trail.texture = TRAIL_TEXTURES["motion"]
 
 	motion_trail.flip_h = idle_sprite.flip_h
 	motion_trail.position = motion_trail.position.lerp(
@@ -340,6 +394,19 @@ func _update_movement_phase(raw_input_x: float, delta: float) -> void:
 	_start_pulse = move_toward(_start_pulse, 0.0, delta * 4.8)
 	_stop_settle = move_toward(_stop_settle, 0.0, delta)
 	_was_input_active = input_active
+
+
+func _update_layer_textures(visual_state: String) -> void:
+	var texture_key := visual_state
+	if not LAYER_CORE_TEXTURES.has(texture_key):
+		texture_key = "idle"
+	inner_glow.texture = LAYER_CORE_TEXTURES[texture_key]
+	surface_highlight.texture = LAYER_HIGHLIGHT_TEXTURES[texture_key]
+
+
+func _update_pose_texture(visual_state: String) -> void:
+	if POSE_TEXTURES.has(visual_state):
+		expression_pose.texture = POSE_TEXTURES[visual_state]
 
 
 func _resolve_visual_state(input_x: float) -> String:

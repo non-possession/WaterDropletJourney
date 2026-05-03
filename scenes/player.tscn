@@ -1,8 +1,11 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=9 format=3]
 
 [ext_resource type="Script" path="res://scripts/player.gd" id="1_31p03"]
 [ext_resource type="Texture2D" path="res://assets/sprites/water_player_spirit/overlay_calm.png" id="3_g4lyp"]
-[ext_resource type="Texture2D" path="res://assets/sprites/water_player_spirit/inner_glow.png" id="4_06amb"]
+[ext_resource type="Texture2D" path="res://assets/sprites/water_player_layers/trail_motion.png" id="4_xwabv"]
+[ext_resource type="Texture2D" path="res://assets/sprites/water_player_layers/core_idle.png" id="5_dhu8d"]
+[ext_resource type="Texture2D" path="res://assets/sprites/water_player_layers/highlight_idle.png" id="6_j7fch"]
+[ext_resource type="Texture2D" path="res://assets/sprites/water_player_layers/pose_start.png" id="7_0qqon"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_g53y1"]
 radius = 26.0
@@ -15,13 +18,18 @@ position = Vector2(0, 8)
 shape = SubResource("CircleShape2D_g53y1")
 
 [node name="MotionTrail" type="Sprite2D" parent="."]
-texture = ExtResource("3_g4lyp")
+texture = ExtResource("4_xwabv")
 modulate = Color(0.501961, 0.901961, 1, 0)
 position = Vector2(-18, 5)
 scale = Vector2(0.42, 0.34)
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
 frame_progress = 0.634052
+scale = Vector2(0.4, 0.4)
+
+[node name="ExpressionPose" type="Sprite2D" parent="."]
+texture = ExtResource("7_0qqon")
+modulate = Color(1, 1, 1, 0)
 scale = Vector2(0.4, 0.4)
 
 [node name="StateOverlay" type="Sprite2D" parent="."]
@@ -31,16 +39,16 @@ position = Vector2(0, -4)
 scale = Vector2(0.4, 0.4)
 
 [node name="InnerGlow" type="Sprite2D" parent="."]
-texture = ExtResource("4_06amb")
+texture = ExtResource("5_dhu8d")
 modulate = Color(0.603922, 0.968627, 1, 0.72)
 position = Vector2(0, 8)
-scale = Vector2(0.2, 0.2)
+scale = Vector2(0.4, 0.4)
 
 [node name="SurfaceHighlight" type="Sprite2D" parent="."]
-texture = ExtResource("3_g4lyp")
-modulate = Color(0.870588, 1, 1, 0.11)
+texture = ExtResource("6_j7fch")
+modulate = Color(0.870588, 1, 1, 0.16)
 position = Vector2(-6, -18)
-scale = Vector2(0.22, 0.18)
+scale = Vector2(0.4, 0.4)
 
 [node name="ContactGlow" type="Polygon2D" parent="."]
 position = Vector2(0, 42)
