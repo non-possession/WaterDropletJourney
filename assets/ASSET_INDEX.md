@@ -35,13 +35,14 @@
 - `assets/sprites/water_states/water_absorbed.png`: 被吸收，形体被拉入方向性流动中，核心仍保留
 - `assets/sprites/water_states/water_resting.png`: 额外补充状态，闭眼静息版
 
-## Water Idle Animation
+## Current Water Player Sprites
 
-- `assets/sprites/water_idle/idle_00.png` ~ `idle_05.png`: 从 `p2.png` 切出的 6 帧待机图
-- `assets/sprites/water_idle/water_idle_frames.tres`: Godot `SpriteFrames` 资源，可直接用于 `AnimatedSprite2D`
+- `assets/sprites/water_player_spirit/`: 当前主角水滴的基础逐帧表现与状态叠层资源
+- `assets/sprites/water_player_layers/`: 当前主角水滴的分层表现资源，包括主体、外轮廓、内亮核、高光、拖尾和姿态层
+- `assets/sprites/water_siblings/`: 第一章开场中用于群体水灵氛围的兄弟姐妹水滴资源
 
 ## Suggested Usage
 
 - 地图拼接或参考切片：使用 `assets/tiles/b2/`
 - 水滴情绪状态切换：使用 `assets/sprites/water_states/`
-- 水滴不移动时的循环动画：使用 `assets/sprites/water_idle/water_idle_frames.tres`
+- 主角水滴当前可玩表现：优先使用 `assets/sprites/water_player_spirit/` 与 `assets/sprites/water_player_layers/`

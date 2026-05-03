@@ -5,7 +5,6 @@ from PIL import Image
 
 ROOT = Path("/Users/mistluo/Codes/godot/WaterJourney")
 ORIG = ROOT / "assets/originals"
-PLAYER_OUT = ROOT / "assets/sprites/water_player_sheet"
 MID_OUT = ROOT / "assets/tiles/ch1_snow_mid"
 
 
@@ -41,84 +40,6 @@ def edge_key_transparent(image: Image.Image, bg_predicate) -> Image.Image:
                     queue.append((nx, ny))
 
     return image
-
-
-def build_player_sheet_frames() -> None:
-    PLAYER_OUT.mkdir(parents=True, exist_ok=True)
-    motion = Image.open(ORIG / "水灵轻移动逐帧动画.png").convert("RGBA")
-
-    def motion_bg(pixel) -> bool:
-        r, g, b, a = pixel
-        return a > 0 and r > 238 and g > 238 and b > 238 and max(r, g, b) - min(r, g, b) < 14
-
-    motion = edge_key_transparent(motion, motion_bg)
-    frame_width = 181
-    frame_count = 8
-    compact_frames = []
-    max_width = 0
-    max_height = 0
-
-    for index in range(frame_count):
-        cell = motion.crop((index * frame_width, 0, (index + 1) * frame_width, motion.height))
-        bbox = cell.getchannel("A").getbbox()
-        if bbox:
-            pad = 12
-            left = max(0, bbox[0] - pad)
-            top = max(0, bbox[1] - pad)
-            right = min(cell.width, bbox[2] + pad)
-            bottom = min(cell.height, bbox[3] + pad)
-            cell = cell.crop((left, top, right, bottom))
-        compact_frames.append(cell)
-        max_width = max(max_width, cell.width)
-        max_height = max(max_height, cell.height)
-
-    canvas_width = max_width + 16
-    canvas_height = max_height + 16
-    for index, cell in enumerate(compact_frames):
-        canvas = Image.new("RGBA", (canvas_width, canvas_height), (0, 0, 0, 0))
-        x = (canvas_width - cell.width) // 2
-        y = (canvas_height - cell.height) // 2
-        canvas.alpha_composite(cell, (x, y))
-        canvas.save(PLAYER_OUT / f"move_sheet_{index:02d}.png")
-
-    lines = ['[gd_resource type="SpriteFrames" load_steps=15 format=3]', ""]
-    ext_id = 1
-    for index in range(6):
-        lines.append(
-            f'[ext_resource type="Texture2D" path="res://assets/sprites/water_player/idle_{index:02d}.png" id="{ext_id}"]'
-        )
-        ext_id += 1
-    for index in range(8):
-        lines.append(
-            f'[ext_resource type="Texture2D" path="res://assets/sprites/water_player_sheet/move_sheet_{index:02d}.png" id="{ext_id}"]'
-        )
-        ext_id += 1
-
-    lines += ["", "[resource]", "animations = [", "{", '"frames": [']
-    for index in range(6):
-        comma = "," if index < 5 else ""
-        lines.append(f'{{"duration": 1.0, "texture": ExtResource("{index + 1}")}}{comma}')
-    lines += [
-        "],",
-        '"loop": true,',
-        '"name": &"idle",',
-        '"speed": 6.0',
-        "},",
-        "{",
-        '"frames": [',
-    ]
-    for index in range(8):
-        comma = "," if index < 7 else ""
-        lines.append(f'{{"duration": 1.0, "texture": ExtResource("{index + 7}")}}{comma}')
-    lines += [
-        "],",
-        '"loop": true,',
-        '"name": &"move",',
-        '"speed": 10.0',
-        "}",
-        "]",
-    ]
-    (PLAYER_OUT / "water_player_sheet_frames.tres").write_text("\n".join(lines), encoding="utf-8")
 
 
 def build_midground_tiles() -> None:
@@ -158,7 +79,6 @@ def build_midground_tiles() -> None:
 
 
 def main() -> None:
-    build_player_sheet_frames()
     build_midground_tiles()
 
 
