@@ -34,11 +34,20 @@ const MOVE_WATER_SOUND := preload("res://assets/audio/ch1/protagonist_light_move
 @export var damping := 520.0
 @export var drift_gravity := 380.0
 @export var gentle_lift := -45.0
+@export_group("Water Feel")
+@export var intent_response := 7.0
+@export var body_stretch_strength := 0.13
+@export var core_lag_strength := 9.0
+@export var highlight_drift_strength := 6.0
+@export var trail_strength := 0.24
+@export var contact_glow_strength := 0.2
+@export var stop_settle_time := 0.22
 
 @onready var idle_sprite: AnimatedSprite2D = $AnimatedSprite2D
 @onready var motion_trail: Sprite2D = $MotionTrail
 @onready var state_overlay: Sprite2D = $StateOverlay
 @onready var inner_glow: Sprite2D = $InnerGlow
+@onready var surface_highlight: Sprite2D = $SurfaceHighlight
 @onready var contact_glow: Polygon2D = $ContactGlow
 @onready var idle_audio: AudioStreamPlayer = $IdleWaterAudio
 @onready var move_audio: AudioStreamPlayer = $MoveWaterAudio
@@ -49,12 +58,18 @@ var _trail_base_scale := Vector2.ONE
 var _sprite_base_position := Vector2.ZERO
 var _overlay_base_position := Vector2.ZERO
 var _glow_base_position := Vector2.ZERO
+var _highlight_base_position := Vector2.ZERO
+var _highlight_base_scale := Vector2.ONE
 var _trail_base_position := Vector2.ZERO
 var _contact_base_position := Vector2.ZERO
 var _expression_state_override := ""
 var _visual_state := "idle"
 var _state_age := 0.0
 var _last_move_direction := 1.0
+var _smoothed_input := 0.0
+var _was_input_active := false
+var _start_pulse := 0.0
+var _stop_settle := 0.0
 var _contact_intensity := 0.0
 var _target_contact_intensity := 0.0
 
@@ -70,6 +85,8 @@ func _ready() -> void:
 	_sprite_base_position = idle_sprite.position
 	_overlay_base_position = state_overlay.position
 	_glow_base_position = inner_glow.position
+	_highlight_base_position = surface_highlight.position
+	_highlight_base_scale = surface_highlight.scale
 	_trail_base_position = motion_trail.position
 	_contact_base_position = contact_glow.position
 	set_state_visual("calm")
@@ -85,13 +102,16 @@ func _physics_process(delta: float) -> void:
 		_update_audio(0.0)
 		return
 
-	var input_x := Input.get_axis("move_left", "move_right")
-	if absf(input_x) > 0.01:
-		_last_move_direction = signf(input_x)
+	var raw_input_x := Input.get_axis("move_left", "move_right")
+	_update_movement_phase(raw_input_x, delta)
+	_smoothed_input = lerp(_smoothed_input, raw_input_x, 1.0 - exp(-delta * intent_response))
+	var input_x := _smoothed_input
+	if absf(raw_input_x) > 0.01:
+		_last_move_direction = signf(raw_input_x)
 		if idle_sprite.animation != &"move":
 			idle_sprite.play("move")
 		velocity.x = move_toward(velocity.x, input_x * move_speed, accel * delta)
-		look_direction(signf(input_x))
+		look_direction(signf(raw_input_x))
 	else:
 		if idle_sprite.animation != &"idle":
 			idle_sprite.play("idle")
@@ -127,8 +147,10 @@ func look_direction(direction: float) -> void:
 	if direction == 0.0:
 		return
 	idle_sprite.flip_h = direction < 0.0
+	motion_trail.flip_h = direction < 0.0
 	state_overlay.flip_h = direction < 0.0
 	inner_glow.flip_h = direction < 0.0
+	surface_highlight.flip_h = direction < 0.0
 
 
 func set_state_visual(state_name: String) -> void:
@@ -155,6 +177,7 @@ func clear_expression_state() -> void:
 	if _expression_state_override == "":
 		return
 	_expression_state_override = ""
+	_target_contact_intensity = 0.0
 	_state_age = 0.0
 
 
@@ -170,13 +193,30 @@ func _apply_breathing() -> void:
 	state_overlay.position = _overlay_base_position
 	inner_glow.position = _glow_base_position
 	inner_glow.modulate.a = 0.72 + sin(time * 1.8) * 0.06
+	surface_highlight.position = _highlight_base_position
+	surface_highlight.modulate.a = 0.08 + sin(time * 1.25 + 0.6) * 0.025
 
 
 func _apply_motion_feel(input_x: float) -> void:
 	var stretch: float = clamp(absf(velocity.x) / move_speed, 0.0, 1.0)
 	var direction := _last_move_direction if absf(input_x) <= 0.01 else signf(input_x)
-	idle_sprite.scale = idle_sprite.scale.lerp(_base_scale * Vector2(1.0 + stretch * 0.11, 1.0 - stretch * 0.07), 0.16)
-	inner_glow.position.x = move_toward(inner_glow.position.x, _glow_base_position.x + direction * stretch * 7.0, 0.8)
+	var start_kick := _start_pulse * 0.05
+	var stop_weight: float = _stop_settle / max(stop_settle_time, 0.01)
+	var target_body := _base_scale * Vector2(
+		1.0 + stretch * body_stretch_strength + start_kick - stop_weight * 0.035,
+		1.0 - stretch * body_stretch_strength * 0.64 + stop_weight * 0.05
+	)
+	idle_sprite.scale = idle_sprite.scale.lerp(target_body, 0.16)
+	inner_glow.position.x = move_toward(inner_glow.position.x, _glow_base_position.x + direction * stretch * core_lag_strength, 0.85)
+	surface_highlight.position.x = move_toward(
+		surface_highlight.position.x,
+		_highlight_base_position.x - direction * stretch * highlight_drift_strength,
+		0.55
+	)
+	surface_highlight.scale = surface_highlight.scale.lerp(
+		_highlight_base_scale * Vector2(1.0 + stretch * 0.18, 1.0 - stretch * 0.1),
+		0.12
+	)
 
 
 func _apply_expression_state(input_x: float, delta: float) -> void:
@@ -191,7 +231,9 @@ func _apply_expression_state(input_x: float, delta: float) -> void:
 	var target_sprite_position := idle_sprite.position
 	var target_overlay_position := state_overlay.position
 	var target_glow_position := inner_glow.position
+	var target_highlight_position := surface_highlight.position
 	var target_glow_alpha := inner_glow.modulate.a
+	var target_highlight_alpha := surface_highlight.modulate.a
 	var target_overlay_alpha := state_overlay.modulate.a
 	var ease_in: float = 1.0 - exp(-_state_age * 7.0)
 	var should_use_move_animation := visual_state in ["move", "approach", "leave"] and absf(velocity.x) > 2.0
@@ -207,28 +249,36 @@ func _apply_expression_state(input_x: float, delta: float) -> void:
 			target_sprite_position += Vector2(0.0, 6.0)
 			target_overlay_position += Vector2(0.0, 4.0)
 			target_glow_position += Vector2(0.0, 3.0)
+			target_highlight_position += Vector2(0.0, 2.0)
 			target_glow_alpha = 0.78 + ease_in * 0.12
+			target_highlight_alpha = 0.08
 			target_overlay_alpha = 0.24
 		"approach":
 			var direction := signf(velocity.x) if absf(velocity.x) > 0.1 else _last_move_direction
 			target_sprite_scale = _base_scale * Vector2(1.04, 0.975)
 			target_sprite_position += Vector2(direction * 5.0, 2.0)
 			target_glow_position += Vector2(direction * 8.0, 1.0)
+			target_highlight_position += Vector2(-direction * 5.0, 1.0)
 			target_glow_alpha = 0.82 + ease_in * 0.06
+			target_highlight_alpha = 0.11
 			target_overlay_alpha = 0.22
 		"nestle":
 			target_sprite_scale = _base_scale * Vector2(0.925, 1.11)
 			target_sprite_position += Vector2(-4.0, 10.0)
 			target_overlay_position += Vector2(-3.0, 8.0)
 			target_glow_position += Vector2(-7.0, 7.0)
+			target_highlight_position += Vector2(-7.0, 5.0)
 			target_glow_alpha = 0.9 + sin(Time.get_ticks_msec() / 1000.0 * 1.35) * 0.035
+			target_highlight_alpha = 0.075
 			target_overlay_alpha = 0.24
 		"leave":
 			var direction := signf(velocity.x) if absf(velocity.x) > 0.1 else _last_move_direction
 			target_sprite_scale = _base_scale * Vector2(1.11, 0.945)
 			target_sprite_position += Vector2(direction * 9.0, 1.0)
 			target_glow_position += Vector2(direction * 8.0, -1.0)
+			target_highlight_position += Vector2(-direction * 7.0, -1.0)
 			target_glow_alpha = 0.78
+			target_highlight_alpha = 0.12
 			target_overlay_alpha = 0.16
 
 	var sprite_lerp: float = 1.0 - exp(-delta * 13.0)
@@ -237,7 +287,9 @@ func _apply_expression_state(input_x: float, delta: float) -> void:
 	idle_sprite.position = idle_sprite.position.lerp(target_sprite_position, sprite_lerp)
 	state_overlay.position = state_overlay.position.lerp(target_overlay_position, detail_lerp)
 	inner_glow.position = inner_glow.position.lerp(target_glow_position, detail_lerp)
+	surface_highlight.position = surface_highlight.position.lerp(target_highlight_position, detail_lerp)
 	inner_glow.modulate.a = lerp(inner_glow.modulate.a, target_glow_alpha, detail_lerp)
+	surface_highlight.modulate.a = lerp(surface_highlight.modulate.a, target_highlight_alpha, detail_lerp)
 	state_overlay.modulate.a = lerp(state_overlay.modulate.a, target_overlay_alpha, detail_lerp)
 
 
@@ -254,7 +306,7 @@ func _apply_feedback_layers(input_x: float, delta: float) -> void:
 		target_contact = max(target_contact, 0.18)
 
 	_contact_intensity = lerp(_contact_intensity, target_contact, 1.0 - exp(-delta * 4.8))
-	var trail_alpha := speed_mix * 0.18
+	var trail_alpha := speed_mix * trail_strength
 	if visual_state == "approach":
 		trail_alpha += 0.06
 	elif visual_state == "leave":
@@ -275,7 +327,19 @@ func _apply_feedback_layers(input_x: float, delta: float) -> void:
 
 	var time := Time.get_ticks_msec() / 1000.0
 	contact_glow.position = _contact_base_position + Vector2(sin(time * 1.6) * 2.5 * _contact_intensity, 0.0)
-	contact_glow.color = Color(0.58, 1.0, 0.87, 0.18 * _contact_intensity)
+	contact_glow.color = Color(0.58, 1.0, 0.87, contact_glow_strength * _contact_intensity)
+
+
+func _update_movement_phase(raw_input_x: float, delta: float) -> void:
+	var input_active := absf(raw_input_x) > 0.01
+	if input_active and not _was_input_active:
+		_start_pulse = 1.0
+		_stop_settle = 0.0
+	if not input_active and _was_input_active:
+		_stop_settle = stop_settle_time
+	_start_pulse = move_toward(_start_pulse, 0.0, delta * 4.8)
+	_stop_settle = move_toward(_stop_settle, 0.0, delta)
+	_was_input_active = input_active
 
 
 func _resolve_visual_state(input_x: float) -> String:

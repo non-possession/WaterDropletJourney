@@ -14,6 +14,9 @@ const RESPONSE_SOUND := preload("res://assets/audio/ch1/control_handoff_subtle_c
 @export var sway_amount := 8.0
 @export var auto_reset_delay := 0.45
 @export var settle_speed_threshold := 14.0
+@export var presence_rise_speed := 3.8
+@export var residual_fade_speed := 0.34
+@export var player_contact_strength := 1.0
 
 @onready var detection_area: Area2D = $DetectionArea
 @onready var detection_shape: CollisionShape2D = $DetectionArea/CollisionShape2D
@@ -63,7 +66,7 @@ func _process(delta: float) -> void:
 
 		if _is_settled:
 			target_presence = 1.0
-			_player.set_environment_contact_intensity(1.0)
+			_player.set_environment_contact_intensity(player_contact_strength)
 			_player.set_expression_state("nestle")
 		else:
 			var is_slow: bool = _player.velocity.length() <= settle_speed_threshold
@@ -71,24 +74,25 @@ func _process(delta: float) -> void:
 			if is_close and is_slow:
 				_dwell_time += delta
 				target_presence = max(target_presence, 0.58 + (_dwell_time / max(settle_time, 0.01)) * 0.3)
-				_player.set_environment_contact_intensity(0.28 + clamp(_dwell_time / max(settle_time, 0.01), 0.0, 1.0) * 0.42)
+				var dwell_ratio: float = clamp(_dwell_time / max(settle_time, 0.01), 0.0, 1.0)
+				_player.set_environment_contact_intensity((0.28 + dwell_ratio * 0.42) * player_contact_strength)
 				_player.set_expression_state("pause")
 			else:
 				_dwell_time = max(_dwell_time - delta * 1.8, 0.0)
-				_player.set_environment_contact_intensity(close_ratio * 0.22)
+				_player.set_environment_contact_intensity(close_ratio * 0.22 * player_contact_strength)
 				_player.set_expression_state("approach")
 
 			if _dwell_time >= settle_time:
 				_is_settled = true
 				target_presence = 1.0
 				_residual_presence = 1.0
-				_player.set_environment_contact_intensity(1.0)
+				_player.set_environment_contact_intensity(player_contact_strength)
 				_player.set_expression_state("nestle")
 				response_audio.play()
 				interaction_settled.emit()
 	else:
 		_focus_ratio = lerp(_focus_ratio, 0.0, min(delta * 3.0, 1.0))
-		_residual_presence = move_toward(_residual_presence, 0.0, delta * 0.34)
+		_residual_presence = move_toward(_residual_presence, 0.0, delta * residual_fade_speed)
 		if _leave_timer > 0.0:
 			_leave_timer -= delta
 			target_presence = max(0.18, _residual_presence)
@@ -102,7 +106,7 @@ func _process(delta: float) -> void:
 		else:
 			target_presence = _residual_presence
 
-	_presence = lerp(_presence, target_presence, min(delta * 3.8, 1.0))
+	_presence = lerp(_presence, target_presence, min(delta * presence_rise_speed, 1.0))
 	bush_pivot.rotation = sway_wave * (0.5 + _presence * 1.2) * sway_amount / 10.0
 	foliage_front.position.y = -8.0 + sin(time * 2.1 + 0.7) * (1.0 + _presence * 2.0)
 	foliage_front.position.x = -4.0 + sin(time * 1.15) * _presence * 1.2
@@ -118,6 +122,10 @@ func _process(delta: float) -> void:
 
 func get_focus_ratio() -> float:
 	return _focus_ratio
+
+
+func get_presence_ratio() -> float:
+	return _presence
 
 
 func _update_visuals(presence: float) -> void:
