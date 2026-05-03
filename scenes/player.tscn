@@ -14,6 +14,12 @@ script = ExtResource("1_31p03")
 position = Vector2(0, 8)
 shape = SubResource("CircleShape2D_g53y1")
 
+[node name="MotionTrail" type="Sprite2D" parent="."]
+texture = ExtResource("3_g4lyp")
+modulate = Color(0.501961, 0.901961, 1, 0)
+position = Vector2(-18, 5)
+scale = Vector2(0.42, 0.34)
+
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
 frame_progress = 0.634052
 scale = Vector2(0.4, 0.4)
@@ -29,6 +35,11 @@ texture = ExtResource("4_06amb")
 modulate = Color(0.603922, 0.968627, 1, 0.72)
 position = Vector2(0, 8)
 scale = Vector2(0.2, 0.2)
+
+[node name="ContactGlow" type="Polygon2D" parent="."]
+position = Vector2(0, 42)
+color = Color(0.580392, 1, 0.87451, 0)
+polygon = PackedVector2Array(-46, 3, -32, -8, -8, -13, 22, -10, 48, 3, 36, 14, 4, 18, -30, 14)
 
 [node name="IdleWaterAudio" type="AudioStreamPlayer" parent="."]
 bus = &"Master"

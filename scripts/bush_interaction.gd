@@ -33,6 +33,8 @@ var _dwell_time := 0.0
 var _is_settled := false
 var _leave_timer := 0.0
 var _focus_ratio := 0.0
+var _presence := 0.0
+var _residual_presence := 0.0
 
 
 func _ready() -> void:
@@ -61,44 +63,57 @@ func _process(delta: float) -> void:
 
 		if _is_settled:
 			target_presence = 1.0
+			_player.set_environment_contact_intensity(1.0)
 			_player.set_expression_state("nestle")
 		else:
 			var is_slow: bool = _player.velocity.length() <= settle_speed_threshold
 			var is_close: bool = player_distance <= detection_radius * 0.7
 			if is_close and is_slow:
 				_dwell_time += delta
+				target_presence = max(target_presence, 0.58 + (_dwell_time / max(settle_time, 0.01)) * 0.3)
+				_player.set_environment_contact_intensity(0.28 + clamp(_dwell_time / max(settle_time, 0.01), 0.0, 1.0) * 0.42)
 				_player.set_expression_state("pause")
 			else:
 				_dwell_time = max(_dwell_time - delta * 1.8, 0.0)
+				_player.set_environment_contact_intensity(close_ratio * 0.22)
 				_player.set_expression_state("approach")
 
 			if _dwell_time >= settle_time:
 				_is_settled = true
 				target_presence = 1.0
+				_residual_presence = 1.0
+				_player.set_environment_contact_intensity(1.0)
 				_player.set_expression_state("nestle")
 				response_audio.play()
 				interaction_settled.emit()
 	else:
 		_focus_ratio = lerp(_focus_ratio, 0.0, min(delta * 3.0, 1.0))
+		_residual_presence = move_toward(_residual_presence, 0.0, delta * 0.34)
 		if _leave_timer > 0.0:
 			_leave_timer -= delta
-			target_presence = 0.18
+			target_presence = max(0.18, _residual_presence)
 			if _departing_player and is_instance_valid(_departing_player):
+				_departing_player.set_environment_contact_intensity(max(_residual_presence * 0.34, 0.1))
 				_departing_player.set_expression_state("leave")
 			if _leave_timer <= 0.0 and _departing_player and is_instance_valid(_departing_player):
+				_departing_player.set_environment_contact_intensity(0.0)
 				_departing_player.clear_expression_state()
 				_departing_player = null
+		else:
+			target_presence = _residual_presence
 
-	bush_pivot.rotation = sway_wave * (0.5 + target_presence * 1.2) * sway_amount / 10.0
-	foliage_front.position.y = -8.0 + sin(time * 2.1 + 0.7) * (1.0 + target_presence * 2.0)
-	ground_grass.position.y = 26.0 + sin(time * 1.6) * target_presence * 0.8
+	_presence = lerp(_presence, target_presence, min(delta * 3.8, 1.0))
+	bush_pivot.rotation = sway_wave * (0.5 + _presence * 1.2) * sway_amount / 10.0
+	foliage_front.position.y = -8.0 + sin(time * 2.1 + 0.7) * (1.0 + _presence * 2.0)
+	foliage_front.position.x = -4.0 + sin(time * 1.15) * _presence * 1.2
+	ground_grass.position.y = 26.0 + sin(time * 1.6) * _presence * 0.8
 
-	var sparkle_alpha: float = 0.08 + max(target_presence, 0.0) * 0.34
+	var sparkle_alpha: float = 0.08 + max(_presence, 0.0) * 0.34
 	sparkle_a.modulate.a = sparkle_alpha + max(sparkle_wave, 0.0) * 0.12
 	sparkle_b.modulate.a = sparkle_alpha * 0.85 + max(sin(time * 2.7 + 0.9), 0.0) * 0.1
 	sparkle_c.modulate.a = sparkle_alpha * 0.7 + max(sin(time * 1.9 + 1.8), 0.0) * 0.08
 
-	_update_visuals(target_presence)
+	_update_visuals(_presence)
 
 
 func get_focus_ratio() -> float:
@@ -131,5 +146,6 @@ func _on_body_exited(body: Node) -> void:
 	_dwell_time = 0.0
 	_leave_timer = auto_reset_delay
 	if _is_settled:
+		_residual_presence = 1.0
 		interaction_ended.emit()
 	_is_settled = false
